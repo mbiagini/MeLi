@@ -9,32 +9,19 @@
 space					[ \t]
 nullSpace				{space}+
 
-letter					[a-zA-Z]
+typeString				STRING
+typeInt					INT
+typeDouble				DOUBLE
+typeProduct				PRODUCT
+
 lowerCase				[a-z]
 upperCase				[A-Z]
-variableName				[A-Za-z]+
+variableName			[a-z][A-Za-z]+
+constName				[A-Z]+
 
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
 doubleNumber			{digit}+\.{digit}+
-
-typeString				STRING{space}
-typeInt					INT{space}
-typeDouble				DOUBLE{space}
-typeProduct				PRODUCT{space}
-
-/*
-constIdentifier			{upperCase}+
-identifier 				{lowerCase}[{lowerCase}{upperCase}{number}_-]*
-
-
-
-
-
-
-{lowerCase}				{ yylval = *yytext - 'a';
-							return VAR; }
-*/
 
 %%
 
@@ -52,11 +39,12 @@ identifier 				{lowerCase}[{lowerCase}{upperCase}{number}_-]*
 							strcpy(yylval.string, yytext);
 							return VAR; }
 
+{constName}				{ yylval.string = malloc(strlen(yytext)+1);
+							strcpy(yylval.string, yytext);
+							return CONST; }
 
 
-
-
-[-+()</=*\n;]			return *yytext;
+[-+()</=$*\n;]			return *yytext;
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");
 
