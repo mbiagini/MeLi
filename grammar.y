@@ -3,6 +3,7 @@
 	#include <stdio.h>
 	#include <string.h>
 	#include <stdlib.h>
+	#include <stdarg.h>
 	#include "include/utils.h"
 	#include "include/types.h"
 	#define MAX_VARS 5000
@@ -63,6 +64,17 @@
 
 		return ans;
 	}
+
+	char *concat(int nstr, ...) {
+		va_list strs;
+		char *resp = "";
+		int i;
+
+		for (i = 0; i < nstr; i++) {
+			resp = strcat(resp, va_arg(strs, char*));
+		}
+		return resp;
+	}
 %}
 
 %union {
@@ -72,6 +84,7 @@
 
 }
 
+%token LE GE NE EQ AND OR INC DEC
 %token STRING INT DOUBLE PRODUCT
 %token <string> VAR CONST STRINGVAL
 %token <intnum> NUMBER
@@ -115,10 +128,10 @@ const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
 											yyerror("WRONG CONST DECLARATION"); }
 			;
 
-type 		:	 STRING				{$$="char *";}
-			| INT				{$$="int";}
-			| DOUBLE			{$$="double";}
-			| PRODUCT			{$$="void *";}
+type 		:	STRING				{$$="char *";}
+			| 	INT					{$$="int";}
+			| 	DOUBLE				{$$="double";}
+			| 	PRODUCT				{$$="void *";}
 			;
 
 
@@ -147,10 +160,10 @@ expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
 			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
 			| 	STRINGVAL						
 			|	VAR						
-			|	expr '+' expr			{ $$ = strcat(strcat($1,"+"), $3); }
-			|	expr '-' expr			{ $$ = strcat(strcat($1,"-"), $3) ;}
-			|	expr '*' expr			{ $$ = strcat(strcat($1,"*"), $3); }
-			|	expr '/' expr			{ $$ = strcat(strcat($1,"/"), $3); }
+			|	expr '+' expr			{ $$ = concat(3,$1,'+',$3); }
+			|	expr '-' expr			{ $$ = concat(3,$1,'-',$3); }
+			|	expr '*' expr			{ $$ = concat(3,$1,'*',$3); }
+			|	expr '/' expr			{ $$ = concat(3,$1,'/',$3); }
 			| '(' expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
 								  sprintf($$,"(%s)",$2);}
 			;

@@ -26,6 +26,15 @@ stringVal			[A-Za-z0-9]+
 
 %%
 
+"<="					{ return LE; }
+">="					{ return GE; }
+"!="					{ return NE; }
+"=="					{ return EQ; }
+"&&"					{ return AND; }
+"||"					{ return OR; }
+"++"					{ return INC; }
+"--"					{ return DEC; }
+
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
 {typeDouble}			{ return DOUBLE; }
