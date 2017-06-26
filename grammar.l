@@ -2,6 +2,8 @@
 	#include <stdlib.h>
 	#include "y.tab.h"
 	void yyerror(char *);
+
+
 %}
 
 space					[ \t]
@@ -10,6 +12,7 @@ nullSpace				{space}+
 letter					[a-zA-Z]
 lowerCase				[a-z]
 upperCase				[A-Z]
+variableName				[A-Za-z]+
 
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
@@ -23,6 +26,14 @@ typeProduct				PRODUCT{space}
 /*
 constIdentifier			{upperCase}+
 identifier 				{lowerCase}[{lowerCase}{upperCase}{number}_-]*
+
+
+
+
+
+
+{lowerCase}				{ yylval = *yytext - 'a';
+							return VAR; }
 */
 
 %%
@@ -32,15 +43,20 @@ identifier 				{lowerCase}[{lowerCase}{upperCase}{number}_-]*
 {typeDouble}			{ return DOUBLE; }
 {typeProduct}			{ return PRODUCT; }
 
-{wholeNumber}			{ yylval = atoi(yytext);
+{wholeNumber}			{ yylval.intnum = atoi(yytext);
 							return NUMBER; }
-{doubleNumber}			{ yylval = atof(yytext);
+{doubleNumber}			{ yylval.floatnum = atof(yytext);
 							return DOUBLENUMBER; }
 
-{lowerCase}				{ yylval = *yytext - 'a';
+{variableName}				{ yylval.string = malloc(strlen(yytext)+1);
+							strcpy(yylval.string, yytext);
 							return VAR; }
 
-[-+()</=*\n]			return *yytext;
+
+
+
+
+[-+()</=*\n;]			return *yytext;
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");
 
