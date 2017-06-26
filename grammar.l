@@ -1,3 +1,4 @@
+%option yylineno
 %{
 	#include <stdlib.h>
 	#include "y.tab.h"
@@ -5,7 +6,6 @@
 
 
 %}
-
 space					[ \t]
 nullSpace				{space}+
 
@@ -22,6 +22,7 @@ constName				[A-Z]+
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
 doubleNumber			{digit}+\.{digit}+
+stringVal			[A-Za-z0-9]+
 
 %%
 
@@ -35,6 +36,10 @@ doubleNumber			{digit}+\.{digit}+
 {doubleNumber}			{ yylval.floatnum = atof(yytext);
 							return DOUBLENUMBER; }
 
+\"{stringVal}\"				{ yylval.string = malloc(strlen(yytext)+1);
+							strcpy(yylval.string, yytext);
+							return STRINGVAL; }
+
 {variableName}				{ yylval.string = malloc(strlen(yytext)+1);
 							strcpy(yylval.string, yytext);
 							return VAR; }
@@ -45,6 +50,7 @@ doubleNumber			{digit}+\.{digit}+
 
 
 [-+()</=$*\n;]			return *yytext;
+
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");
 

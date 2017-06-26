@@ -2,8 +2,10 @@
 %{
 	#include <stdio.h>
 	#include <string.h>
+	#include "include/utils.h"
 	int yylex(void);
 	void yyerror(char *);
+	extern int yylineno;
 %}
 
 %union {
@@ -14,7 +16,7 @@
 }
 
 %token STRING INT DOUBLE PRODUCT
-%token <string> VAR CONST
+%token <string> VAR CONST STRINGVAL
 %token <intnum> NUMBER
 %token <floatnum> DOUBLENUMBER
 %left '+' '-'
@@ -23,59 +25,62 @@
 
 %type <string> statement;
 %type <string> expr;
-%type <intnum> wholeNum;
-%type <floatnum> doubleNum;
+%type <string> const_type;
+
 
 
 %start program
 
 %%
 
-program		:	'$' '$' '\n' constList '$' '$' '\n' program
-			|	program statement '\n'
+program		:	'$' '$' '\n' constList '$' '$' '\n' main
+			|	main
+			;
+
+main		:  	main statement '\n'
+			| 	/*NULL*/
+			;
+
+constList 	:	const constList 
 			|	/* NULL */
 			;
 
-constList 	:	constList const
-			|	/* NULL */
+const 		:	const_type CONST '<' '-' expr ';' '\n'			{ if(validate($1,$5))
+											printf("const %s  %s = %s;\n", $1,$2, $5);
+										  else
+											yyerror("WRONG CONST DECLARATION"); }
 			;
 
-const 		:	STRING CONST '<' '-' expr ';' '\n'
-			|	INT CONST '<' '-' expr ';' '\n'				{ printf("const int %s = %s;\n", $2, $5); }
-			|	DOUBLE CONST '<' '-' expr ';' '\n'			{ printf("const double %s = %s;\n", $2, $5); }
-			|	PRODUCT CONST '<' '-' expr ';' '\n'
+const_type 	:	 STRING				{$$="char *";}
+			| INT				{$$="int";}
+			| DOUBLE			{$$="double";}
+			| PRODUCT			{$$="void *";}
 			;
 
 
-statement	:	expr					{ printf("%s\n",$1); }
-			|	VAR '<' '-' expr';'		{ printf("%s = %s;\n",$1,$4); }
+statement	:	VAR '<' '-' expr';'		{ printf("%s = %s;\n",$1,$4); }
 			;
 
-expr		:	wholeNum	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
-			|	doubleNum 						{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
+expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
+			|	DOUBLENUMBER						{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
+			| 	STRINGVAL						
 			|	VAR						
-			|	'(' expr '+' expr ')'			{ $$ = malloc((1+strlen($2)+1+strlen($4)+1)*sizeof(*$$));  sprintf($$,"(%s+%s)",$2,$4); }
-			|	'(' expr '-' expr ')'				{ $$ = malloc((1+strlen($2)+1+strlen($4)+1)*sizeof(*$$)); sprintf($$,"(%s-%s)",$2,$4);}
-			|	'(' expr '*' expr')'				{ $$ = malloc((1+strlen($2)+1+strlen($4)+1)*sizeof(*$$)); sprintf($$,"(%s*%s)",$2,$4); }
-			|	'(' expr '/' expr')'				{ $$ = malloc((1+strlen($2)+1+strlen($4)+1)*sizeof(*$$));  sprintf($$,"(%s/%s)",$2,$4);}
 			|	expr '+' expr			{ $$ = strcat(strcat($1,"+"), $3); }
 			|	expr '-' expr			{ $$ = strcat(strcat($1,"-"), $3) ;}
 			|	expr '*' expr			{ $$ = strcat(strcat($1,"*"), $3); }
 			|	expr '/' expr			{ $$ = strcat(strcat($1,"/"), $3); }
+			| '(' expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
+								  sprintf($$,"(%s)",$2);}
 			;
 
-wholeNum  	:	NUMBER 					{ $$ = $1; }
-			|	'(' wholeNum ')' 		{ $$ = $2; }
-			;
 
-doubleNum 	:	DOUBLENUMBER 			{ $$ = $1; }
-			|	'(' doubleNum ')'		{ $$ = $2; }
-			;
+
+
 
 %%
 
 void yyerror(char *s) {
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "line %d: %s\n", yylineno, s);
 }
 
 int main(void) {
