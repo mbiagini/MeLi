@@ -25,6 +25,7 @@
 
 %type <string> statement;
 %type <string> expr;
+%type <string> const_expr;
 %type <string> const_type;
 
 
@@ -45,7 +46,7 @@ constList 	:	const constList
 			|	/* NULL */
 			;
 
-const 		:	const_type CONST '<' '-' expr ';' '\n'			{ if(validate($1,$5))
+const 		:	const_type CONST '<' '-' const_expr ';' '\n'			{ if(validate($1,$5))
 											printf("const %s  %s = %s;\n", $1,$2, $5);
 										  else
 											yyerror("WRONG CONST DECLARATION"); }
@@ -62,7 +63,7 @@ statement	:	VAR '<' '-' expr';'		{ printf("%s = %s;\n",$1,$4); }
 			;
 
 expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
-			|	DOUBLENUMBER						{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
+			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
 			| 	STRINGVAL						
 			|	VAR						
 			|	expr '+' expr			{ $$ = strcat(strcat($1,"+"), $3); }
@@ -70,6 +71,17 @@ expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
 			|	expr '*' expr			{ $$ = strcat(strcat($1,"*"), $3); }
 			|	expr '/' expr			{ $$ = strcat(strcat($1,"/"), $3); }
 			| '(' expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
+								  sprintf($$,"(%s)",$2);}
+			;
+
+const_expr		:	NUMBER	 			{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
+			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
+			| 	STRINGVAL												
+			|	const_expr '+' const_expr			{ $$ = strcat(strcat($1,"+"), $3); }
+			|	const_expr '-' const_expr			{ $$ = strcat(strcat($1,"-"), $3) ;}
+			|	const_expr '*' const_expr			{ $$ = strcat(strcat($1,"*"), $3); }
+			|	const_expr '/' const_expr			{ $$ = strcat(strcat($1,"/"), $3); }
+			| '(' const_expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
 								  sprintf($$,"(%s)",$2);}
 			;
 
