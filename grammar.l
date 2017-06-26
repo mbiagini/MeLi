@@ -16,7 +16,7 @@ typeProduct				PRODUCT
 
 lowerCase				[a-z]
 upperCase				[A-Z]
-variableName			[a-z][A-Za-z]+
+variableName			[a-z][A-Za-z]*
 constName				[A-Z]+
 
 digit					[0-9]

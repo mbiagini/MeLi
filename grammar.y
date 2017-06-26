@@ -2,10 +2,67 @@
 %{
 	#include <stdio.h>
 	#include <string.h>
+	#include <stdlib.h>
 	#include "include/utils.h"
+	#include "include/types.h"
+	#define MAX_VARS 5000
+
+
 	int yylex(void);
 	void yyerror(char *);
 	extern int yylineno;
+
+	
+
+	VARIABLE  vars[MAX_VARS] = {0};
+
+	int addVar(VARIABLE var){
+		int i;
+
+		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL ; i++){
+			if(strcmp(vars[i].name, var.name) == 0){
+				return -1;
+			}
+		}
+
+		if(i == MAX_VARS){
+			return -2;
+		}
+		vars[i] = var;
+		return i;	
+	}
+
+	//content could be null if var was only declared and not initialized
+	VARIABLE prepareVar(char * type, char * name ,void * content){
+		VARIABLE ans;
+		if(strcmp(type,"char *")==0){
+			ans.type = STRING_TYPE;	
+			ans.name = malloc(strlen(name)+1);
+			strcpy(ans.name,name);
+			if(content != NULL){
+				ans.content = malloc(strlen((char *)content)+1);
+				memcpy(ans.content,content,strlen((char *)content));
+			}
+		}else if(strcmp(type,"int")==0){
+			ans.type = INT_TYPE;
+			ans.name = malloc(strlen(name)+1);
+			strcpy(ans.name,name);
+			if(content != NULL){
+				ans.content = malloc(sizeof(int));
+				memcpy(ans.content,content,sizeof(int));
+			}
+		}else if(strcmp(type,"double")==0){
+			ans.type = DOUBLE_TYPE;
+			ans.name = malloc(strlen(name)+1);
+			strcpy(ans.name,name);
+			if(content != NULL){
+				ans.content = malloc(sizeof(double));
+				memcpy(ans.content,content,sizeof(double));
+			}
+		}
+
+		return ans;
+	}
 %}
 
 %union {
@@ -26,7 +83,7 @@
 %type <string> statement;
 %type <string> expr;
 %type <string> const_expr;
-%type <string> const_type;
+%type <string> type;
 
 
 
@@ -38,7 +95,7 @@ program		:	'$' '$' '\n' constList '$' '$' '\n' main
 			|	main
 			;
 
-main		:  	main statement '\n'
+main		:  	main statement 
 			| 	/*NULL*/
 			;
 
@@ -46,20 +103,44 @@ constList 	:	const constList
 			|	/* NULL */
 			;
 
-const 		:	const_type CONST '<' '-' const_expr ';' '\n'			{ if(validate($1,$5))
-											printf("const %s  %s = %s;\n", $1,$2, $5);
-										  else
+const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
+											int ans = addVar(prepareVar($1,$2,$5));
+											if( ans >= 0)
+												printf("const %s %s = %s;\n", $1,$2, $5);
+											else if(ans == -1)
+												yyerror("ALREADY DEFINED CONST/VAR");
+											else if(ans == -2)
+												yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+										 }else
 											yyerror("WRONG CONST DECLARATION"); }
 			;
 
-const_type 	:	 STRING				{$$="char *";}
+type 		:	 STRING				{$$="char *";}
 			| INT				{$$="int";}
 			| DOUBLE			{$$="double";}
 			| PRODUCT			{$$="void *";}
 			;
 
 
-statement	:	VAR '<' '-' expr';'		{ printf("%s = %s;\n",$1,$4); }
+statement	:	VAR '<' '-' expr';' '\n'		{ printf("%s = %s;\n",$1,$4); }
+			| type VAR';' '\n'			{ int ans = addVar(prepareVar($1,$2,NULL));
+									if( ans >= 0)
+										printf("%s %s ;\n", $1,$2);
+									else if(ans == -1)
+										yyerror("ALREADY DEFINED CONST/VAR");
+									else if(ans == -2)
+										yyerror("MAX VARS SIZE REACHED(5000 VARS)"); }
+			| type VAR '<' '-' expr';' '\n'	{  if(validate($1,$5)){
+								int ans = addVar(prepareVar($1,$2,$5));
+								if( ans >= 0)
+									printf("%s %s = %s;\n", $1,$2, $5);
+								else if(ans == -1)
+									yyerror("ALREADY DEFINED CONST/VAR");
+								else if(ans == -2)
+									yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+							   }else
+								yyerror("WRONG VAR DECLARATION");  }
+			
 			;
 
 expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
