@@ -16,7 +16,7 @@ typeProduct				PRODUCT
 
 lowerCase				[a-z]
 upperCase				[A-Z]
-variableName			[a-z][A-Za-z]*
+variableName			[a-z][A-Za-z]+
 constName				[A-Z]+
 
 digit					[0-9]
@@ -34,6 +34,11 @@ stringVal			[A-Za-z0-9]+
 "||"					{ return OR; }
 "++"					{ return INC; }
 "--"					{ return DEC; }
+
+"IF"					{ return IF; }
+"THEN"					{ return THEN; }
+"ELSE"					{ return ELSE; }
+"ENDIF"					{ return ENDIF; }
 
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
