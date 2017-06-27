@@ -96,7 +96,7 @@
 					sprintf(resp,"printf(\"%%f\",%s);\n",var->name);
 					break;
 				case PRODUCT_TYPE:
-					sprintf(resp,"printf(\"%%s\",%s);\n",var->name);
+					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
 					break;
 			}
 		}
@@ -123,7 +123,7 @@
 					sprintf(resp,"printf(\"%%f\\n\",%s);\n",var->name);
 					break;
 				case PRODUCT_TYPE:
-					sprintf(resp,"printf(\"%%s\\n\",%s);\n",var->name);
+					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\n\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
 					break;
 			}
 		}
@@ -197,7 +197,7 @@
 %left INC DEC '<' '>' LE GE NE EQ AND OR
 
 
-%type <string> statement;
+%type <string> block statement;
 %type <expre> expr;
 %type <string> const_expr;
 %type <string> type;
@@ -212,7 +212,7 @@ program		:	'$' '$' '\n' constList '$' '$' '\n' main
 			|	main
 			;
 
-main		:  	main statement					{ printf("%s", $2); }
+main		:  	main statement						{ printf("%s", $2); }
 			| 	/*NULL*/
 			;
 
@@ -244,19 +244,28 @@ type 		:	STRING				{$$="char *";}
 			;
 
 
-statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.expr);
-								    if (ans ==1){
-									$$ = malloc((strlen($1)+3+strlen($4.expr)+2)*sizeof(*$$));
-									sprintf($$,"%s = %s;\n", $1, $4.expr);
-								     }
-								    else if (ans == -1){
-									yyerror("NOT DEFINED CONST/VAR ");
-									YYABORT;
-								  }
-								   else if (ans == -2){
-									yyerror("WRONG TYPE FOR VAR ");
-									YYABORT;
-								  }}
+block		:	block statement		{
+										$$ = malloc((strlen($1)+strlen($2))*sizeof(*$$));
+										sprintf($$, "%s%s", $1,$2);
+									}
+			|						{	$$ = ""; }
+			;
+
+statement 	:	VAR '<' '-' expr ';' '\n' 		{
+													int ans = validateAsignation($1,$4.expr);
+								    				if (ans ==1) {
+														$$ = malloc((strlen($1)+3+strlen($4.expr)+2)*sizeof(*$$));
+														sprintf($$,"%s = %s;\n", $1, $4.expr);
+								     				}
+								    				else if (ans == -1) {
+														yyerror("NOT DEFINED CONST/VAR ");
+														YYABORT;
+									  				}
+								   					else if (ans == -2) {
+														yyerror("WRONG TYPE FOR VAR ");
+														YYABORT;
+								  					}													
+																					}
 
 			|VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
 																					 if(v == NULL || v->type != PRODUCT_TYPE){
@@ -266,9 +275,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 																					}
 																					$$ = malloc((strlen($1)+strlen($5)+strlen($7)
 																						+strlen($9.expr)+strlen($11.expr)+35)*sizeof($$));
-															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);
-													
-																					}
+															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);	}																			
 			|	type VAR ';' '\n'				{
 													int ans = addVar(prepareVar($1,$2,NULL,0));
 													if (ans >= 0) {
@@ -322,6 +329,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 													}	
 												}
 
+
 			|	PRODUCT VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n' 	{	if($10.type != INT_TYPE || $12.type!= DOUBLE_TYPE){
 															
 														yyerror("wrong var declaration");YYABORT;
@@ -331,28 +339,29 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 								  						sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
 													}
 														
+
+			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3.expr); }
+			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3.expr); }
 			| 	IF expr '\n' 
-					statement 
+					block 
 				ENDIF '\n'						{ 
 													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+2)*sizeof(*$$));
 													sprintf($$, "if(%s) {\n%s}\n", $2.expr,$4);
 												}
-			|	IF expr '\n' 
-					statement 
+			|	IF expr '\n'
+					block 
 				ELSE '\n'
-					statement
+					block
 				ENDIF '\n' 						{
 													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+9+strlen($7)+2)*sizeof(*$$));
 													sprintf($$, "if(%s) {\n%s}\nelse {\n%s}\n", $2.expr,$4,$7);
 												}
 			|	WHILE expr '\n'
-					statement
+					block
 				ENDWHILE '\n'					{
 													$$ = malloc((6+strlen($2.expr)+4+strlen($4)+2)*sizeof(*$$));
 													sprintf($$, "while(%s) {\n%s}\n", $2.expr,$4);
 												}
-			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3.expr); }
-			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3.expr); }
 			;
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
@@ -402,7 +411,7 @@ int main(void) {
     printf("#include <stdlib.h>\n");
     printf("#include <stdio.h>\n");
     printf("#include <string.h>\n");
-   printf("#include %cinclude/types.h%c \n",34,34);
+    printf("#include \"include/types.h\" \n");
     printf("int main(void) { \n");
 
     yyparse();
