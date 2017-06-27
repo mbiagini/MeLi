@@ -33,7 +33,7 @@
 		return i;	
 	}
 
-	int validateAsignation(char * name,char * content){
+	int validateAsignation(char * name,expresion e){
 		int i;
 		int found = 0;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
@@ -49,13 +49,13 @@
 			return -3;
 
 		switch(vars[i-1].type){
-			case STRING_TYPE: return validate("char *",content) == 0 ? -2 : 1 ;
+			case STRING_TYPE: return validate("char *",e.type) == 0 ? -2 : 1 ;
 					  break;
-			case INT_TYPE:return validate("int",content) == 0 ? -2 : 1;
+			case INT_TYPE:return validate("int",e.type) == 0 ? -2 : 1;
 				      break;
-			case DOUBLE_TYPE:return validate("double",content) == 0 ? -2 : 1;
+			case DOUBLE_TYPE:return validate("double",e.type) == 0 ? -2 : 1;
 					 break;
-			case PRODUCT_TYPE:return validate("product",content) == 0 ? -2 : 1;
+			case PRODUCT_TYPE:return validate("product",e.type) == 0 ? -2 : 1;
 					 break;
 		}
 		return -2;
@@ -243,7 +243,7 @@ constList 	:	const constList
 			|	/* NULL */
 			;
 
-const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
+const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(1/*validate($1,$5)   TODO*/){
 											int ans = addVar(prepareVar($1,$2,$5,1));
 											if( ans >= 0)
 												printf("const %s %s = %s;\n", $1,$2, $5);
@@ -275,7 +275,7 @@ block		:	block statement		{
 			;
 
 statement 	:	VAR '<' '-' expr ';' '\n' 		{
-													int ans = validateAsignation($1,$4.expr);
+													int ans = validateAsignation($1,$4);
 								    				if (ans ==1) {
 														$$ = malloc((strlen($1)+3+strlen($4.expr)+2)*sizeof(*$$));
 														sprintf($$,"%s = %s;\n", $1, $4.expr);
@@ -330,8 +330,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														YYABORT;
 													}
 												}
-			|	type VAR '<' '-' expr ';' '\n' 	{
-													if (validate($1,$5.expr)) {
+			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2)*sizeof(*$$));
@@ -357,9 +356,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															
 														yyerror("wrong var declaration");YYABORT;
 														}
-														$$ = malloc((strlen($2)+strlen($6)+strlen($8)
-															+strlen($10.expr)+strlen($12.expr)+18)*sizeof($$));
-								  						sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+														int ans = addVar(prepareVar("product",$2,NULL,0));
+														if( ans >= 0) {
+															$$ = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+18)*sizeof($$));
+								  							sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+														}
+														else if(ans == -1){
+															yyerror("ALREADY DEFINED CONST/VAR");
+															YYABORT;
+														}
+														else if(ans == -2){
+															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
+														
 													}
 														
 
@@ -389,9 +399,13 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
 			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
-			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}			
-			|	VAR				{$$.expr = $1;}					
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
 			|	expr '+' expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
+			|	VAR				{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror("wrong var type or var doesnt exist");YYABORT;}
+								   $$.expr = $1;$$.type=v->type;
+								}					
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 

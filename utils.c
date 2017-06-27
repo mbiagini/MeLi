@@ -3,25 +3,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include "include/types.h"
-var_type validExpr(expresion e1,expresion w2);
 
 
-int validate(char * type, char * expr){
-	int length = strlen(expr);
-	if(strcmp(type,"char *") == 0){
-	  if(expr[0] == 34 && expr[length-1] ==34 && countCharInString(expr,34) == 2)
-		return 1;
-	   return 0;
-	}else if(strcmp(type,"int")== 0 || strcmp(type,"double") == 0){
-	   if(strchr(expr, 34)!= NULL)
-		return 0;
+int  validate(char * type, var_type expr);
+
+
+int validate(char * type, var_type expr_type){
+	if(strcmp(type,"char *") == 0 && expr_type == STRING_TYPE){
+	  return 1;
+	}else if((strcmp(type,"int")== 0 || strcmp(type,"double") == 0)&& (expr_type == INT_TYPE || expr_type == DOUBLE_TYPE)){
 	    return 1;
-	}else if(strcmp(type,"product")==0){
-		if(strchr(expr,'}') ==NULL)
-			return 0;
-		 if(countCharInString(expr,34) == 4)
-			return 1;
-		return 0;
+	}else if(strcmp(type,"product")==0 && expr_type == PRODUCT_TYPE){
+		return 1;
 	}
 	return 0;
 }
