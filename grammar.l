@@ -16,7 +16,7 @@ typeProduct				PRODUCT
 
 lowerCase				[a-z]
 upperCase				[A-Z]
-variableName			[a-z][A-Za-z]*
+variableName			[a-z][A-Za-z]+
 constName				[A-Z]+
 
 digit					[0-9]
@@ -25,6 +25,20 @@ doubleNumber			{digit}+\.{digit}+
 stringVal			[A-Za-z0-9]+
 
 %%
+
+"<="					{ return LE; }
+">="					{ return GE; }
+"!="					{ return NE; }
+"=="					{ return EQ; }
+"&&"					{ return AND; }
+"||"					{ return OR; }
+"++"					{ return INC; }
+"--"					{ return DEC; }
+
+"IF"					{ return IF; }
+"THEN"					{ return THEN; }
+"ELSE"					{ return ELSE; }
+"ENDIF"					{ return ENDIF; }
 
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
