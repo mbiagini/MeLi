@@ -241,8 +241,8 @@ const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
 type 		:	STRING				{$$="char *";}
 			| 	INT					{$$="int";}
 			| 	DOUBLE				{$$="double";}
-			| 	PRODUCT				{$$="product";}
 			;
+
 
 statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.expr);
 								    if (ans ==1){
@@ -256,14 +256,40 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 								   else if (ans == -2){
 									yyerror("WRONG TYPE FOR VAR ");
 									YYABORT;
-								  }
+								  }}
+
+			|VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
+																					 if(v == NULL || v->type != PRODUCT_TYPE){
+																					 		yyerror("wrong var type or var doesnt exist");YYABORT;}
+																					if($9.type != INT_TYPE || $11.type!= DOUBLE_TYPE){															
+																							yyerror("wrong var initialization");YYABORT;
+																					}
+																					$$ = malloc((strlen($1)+strlen($5)+strlen($7)
+																						+strlen($9.expr)+strlen($11.expr)+35)*sizeof($$));
+															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);
 													
-												}
+																					}
 			|	type VAR ';' '\n'				{
 													int ans = addVar(prepareVar($1,$2,NULL,0));
 													if (ans >= 0) {
 														$$ = malloc((strlen($1)+1+strlen($2)+2)*sizeof(*$$));
 														sprintf($$, "%s %s;\n", $1,$2);
+													}
+													else if(ans == -1){
+														yyerror("ALREADY DEFINED CONST/VAR");
+														YYABORT;
+													}
+													else if(ans == -2){
+														yyerror("MAX VARS SIZE REACHED(5000 VARS)");	
+														YYABORT;
+													}
+												}
+
+			|	PRODUCT VAR ';' '\n'				{
+													int ans = addVar(prepareVar("product",$2,NULL,0));
+													if (ans >= 0) {
+														$$ = malloc((7+1+strlen($2)+2)*sizeof(*$$));
+														sprintf($$, "product %s;\n", $2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED CONST/VAR");
@@ -295,6 +321,16 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 														YYABORT;
 													}	
 												}
+
+			|	PRODUCT VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n' 	{	if($10.type != INT_TYPE || $12.type!= DOUBLE_TYPE){
+															
+														yyerror("wrong var declaration");YYABORT;
+														}
+														$$ = malloc((strlen($2)+strlen($6)+strlen($8)
+															+strlen($10.expr)+strlen($12.expr)+18)*sizeof($$));
+								  						sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+													}
+														
 			| 	IF expr '\n' 
 					statement 
 				ENDIF '\n'						{ 
@@ -320,7 +356,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.exp
 			;
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
-			|	DOUBLENUMBER				{ $$.type = INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
+			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
 			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}			
 			|	VAR				{$$.expr = $1;}					
 			|	expr '+' expr			{$$.type = validExpr($1,$3); if($$.type != -1){$$.expr = addition($1.expr,$3.expr);}else{yyerror("WRONG EXPR");YYABORT;} }
@@ -338,8 +374,6 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))
 			| 	'!' expr 				{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
 			| '(' expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
-			| '{' STRINGVAL ',' STRINGVAL ',' expr ',' expr '}'				{ $$.expr = malloc((1+strlen($2)+1+strlen($4)+1+strlen($6.expr)+1+strlen($8.expr)+1)*sizeof(*($$.expr)));
-								  sprintf($$.expr,"{%s,%s,%s,%s}",$2,$4,$6.expr,$8.expr);}
 			;
 
 const_expr		:	NUMBER	 			{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
