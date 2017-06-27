@@ -3,4 +3,7 @@
 
 int  validate(char * type, char * expr);
 int countCharInString(char * str, char c);
+
 #endif
+
+

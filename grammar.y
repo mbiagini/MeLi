@@ -174,7 +174,7 @@
   int intnum;
   char * string;
   float floatnum;
-
+  expresion expre;
 }
 
 %token STRING INT DOUBLE PRODUCT
@@ -198,7 +198,7 @@
 
 
 %type <string> statement;
-%type <string> expr;
+%type <expre> expr;
 %type <string> const_expr;
 %type <string> type;
 
@@ -244,10 +244,10 @@ type 		:	STRING				{$$="char *";}
 			| 	PRODUCT				{$$="product";}
 			;
 
-statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
+statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4.expr);
 								    if (ans ==1){
-									$$ = malloc((strlen($1)+3+strlen($4)+2)*sizeof(*$$));
-									sprintf($$,"%s = %s;\n", $1, $4);
+									$$ = malloc((strlen($1)+3+strlen($4.expr)+2)*sizeof(*$$));
+									sprintf($$,"%s = %s;\n", $1, $4.expr);
 								     }
 								    else if (ans == -1){
 									yyerror("NOT DEFINED CONST/VAR ");
@@ -275,11 +275,11 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 													}
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{
-													if (validate($1,$5)) {
-														int ans = addVar(prepareVar($1,$2,$5,0));
+													if (validate($1,$5.expr)) {
+														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {
-															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5)+2)*sizeof(*$$));
-															sprintf($$, "%s %s = %s;\n", $1,$2,$5);
+															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2)*sizeof(*$$));
+															sprintf($$, "%s %s = %s;\n", $1,$2,$5.expr);
 														}
 														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
@@ -298,48 +298,48 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 			| 	IF expr '\n' 
 					statement 
 				ENDIF '\n'						{ 
-													$$ = malloc((3+strlen($2)+4+strlen($4)+2)*sizeof(*$$));
-													sprintf($$, "if(%s) {\n%s}\n", $2,$4);
+													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+2)*sizeof(*$$));
+													sprintf($$, "if(%s) {\n%s}\n", $2.expr,$4);
 												}
 			|	IF expr '\n' 
 					statement 
 				ELSE '\n'
 					statement
 				ENDIF '\n' 						{
-													$$ = malloc((3+strlen($2)+4+strlen($4)+9+strlen($7)+2)*sizeof(*$$));
-													sprintf($$, "if(%s) {\n%s}\nelse {\n%s}\n", $2,$4,$7);
+													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+9+strlen($7)+2)*sizeof(*$$));
+													sprintf($$, "if(%s) {\n%s}\nelse {\n%s}\n", $2.expr,$4,$7);
 												}
 			|	WHILE expr '\n'
 					statement
 				ENDWHILE '\n'					{
-													$$ = malloc((6+strlen($2)+4+strlen($4)+2)*sizeof(*$$));
-													sprintf($$, "while(%s) {\n%s}\n", $2,$4);
+													$$ = malloc((6+strlen($2.expr)+4+strlen($4)+2)*sizeof(*$$));
+													sprintf($$, "while(%s) {\n%s}\n", $2.expr,$4);
 												}
-			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3); }
-			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3); }
+			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3.expr); }
+			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3.expr); }
 			;
 
-expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
-			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
-			| 	STRINGVAL						
-			|	VAR						
-			|	expr '+' expr			{ $$ = addition($1,$3); }
-			|	expr '-' expr			{ $$ = strcat(strcat($1,"-"), $3); }
-			|	expr '*' expr			{ $$ = strcat(strcat($1,"*"), $3); }
-			|	expr '/' expr			{ $$ = strcat(strcat($1,"/"), $3); }
-			|	expr '<' expr 			{ $$ = strcat(strcat($1,"<"), $3); }
-			|	expr '>' expr 			{ $$ = strcat(strcat($1,">"), $3); }
-			|	expr LE expr 			{ $$ = strcat(strcat($1,"<="), $3); }
-			| 	expr GE expr 			{ $$ = strcat(strcat($1,">="), $3); } 
-			| 	expr NE expr 			{ $$ = strcat(strcat($1,"!="), $3); }
-			| 	expr EQ expr 			{ $$ = strcat(strcat($1,"=="), $3); }
-			| 	expr AND expr 			{ $$ = strcat(strcat($1,"&&"), $3); }
-			| 	expr OR expr 			{ $$ = strcat(strcat($1,"||"), $3); }
-			| 	'!' expr 				{ $$ = strcat("!",$2); }
-			| '(' expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
-								  sprintf($$,"(%s)",$2);}
-			| '{' STRINGVAL ',' STRINGVAL ',' expr ',' expr '}'				{ $$ = malloc((1+strlen($2)+1+strlen($4)+1+strlen($6)+1+strlen($8)+1)*sizeof(*$$));
-								  sprintf($$,"{%s,%s,%s,%s}",$2,$4,$6,$8);}
+expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
+			|	DOUBLENUMBER				{ $$.type = INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}			
+			|	VAR				{$$.expr = $1;}					
+			|	expr '+' expr			{$$.type = validExpr($1,$3); if($$.type != -1){$$.expr = addition($1.expr,$3.expr);}else{yyerror("WRONG EXPR");YYABORT;} }
+			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	expr '<' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	expr '>' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	expr LE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr GE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr NE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"!="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr EQ expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr AND expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr OR expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	'!' expr 				{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
+			| '(' expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1)*sizeof(*($$.expr)));
+								  sprintf($$.expr,"(%s)",$2.expr);}
+			| '{' STRINGVAL ',' STRINGVAL ',' expr ',' expr '}'				{ $$.expr = malloc((1+strlen($2)+1+strlen($4)+1+strlen($6.expr)+1+strlen($8.expr)+1)*sizeof(*($$.expr)));
+								  sprintf($$.expr,"{%s,%s,%s,%s}",$2,$4,$6.expr,$8.expr);}
 			;
 
 const_expr		:	NUMBER	 			{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }

@@ -1,3 +1,6 @@
+#ifndef _types_h
+#define _types_h
+
 typedef enum
 {
 	STRING_TYPE ,
@@ -19,3 +22,10 @@ typedef struct {
 	double price;
 	int qty;
 }product;
+
+typedef struct{
+	var_type type;
+	char * expr;
+}expresion;
+
+#endif

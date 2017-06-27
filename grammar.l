@@ -1,7 +1,9 @@
 %option yylineno
 %{
 	#include <stdlib.h>
+	#include "include/types.h"
 	#include "y.tab.h"
+
 	void yyerror(char *);
 
 

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "include/types.h"
+var_type validExpr(expresion e1,expresion w2);
+
 
 int validate(char * type, char * expr){
 	int length = strlen(expr);
@@ -32,4 +35,15 @@ int countCharInString(char * str, char c){
 			count++;
 	}
 	return count;
+}
+
+var_type validExpr(expresion e1,expresion e2){
+	if(e1.type == STRING_TYPE && e2.type != STRING_TYPE)
+		return -1;
+	if(e2.type == STRING_TYPE && e1.type != STRING_TYPE){
+		return -1;
+	}
+	if(e1.type == e2.type)
+		return e1.type;
+	return INT_TYPE;
 }
