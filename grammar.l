@@ -22,7 +22,7 @@ constName				[A-Z]+
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
 doubleNumber			{digit}+\.{digit}+
-stringVal			[A-Za-z0-9]+
+stringVal				[A-Za-z0-9]+
 
 %%
 
@@ -39,6 +39,12 @@ stringVal			[A-Za-z0-9]+
 "THEN"					{ return THEN; }
 "ELSE"					{ return ELSE; }
 "ENDIF"					{ return ENDIF; }
+
+"WHILE"					{ return WHILE; }
+"ENDWHILE"				{ return ENDWHILE; }
+
+"PRINT"					{ return PRINT; }
+"PRINTLN"				{ return PRINTLN; }
 
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }

@@ -62,6 +62,78 @@
 			
 	}
 
+	VARIABLE *varSearch(char *name) {
+		int i;
+		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL; i++){
+			if(strcmp(vars[i].name, name) == 0){
+				return &vars[i];
+			}
+		}
+		return NULL;
+	}
+
+	char *addition(char *expr1, char *expr2) {
+		VARIABLE *var1 = varSearch(expr1);
+		VARIABLE *var2 = varSearch(expr2);
+		if (var1 != NULL && var2 != NULL && var1->type == PRODUCT_TYPE && var2->type == PRODUCT_TYPE)
+			;			/* implement prod + prod */
+		return strcat(strcat(expr1,"+"), expr2);
+	}
+
+	char *exprToPrint(char *expr) {
+		char *resp;
+		VARIABLE *var = varSearch(expr);
+		if (var != NULL) {
+			resp = malloc((12+strlen(var->name)+3));
+			switch(var->type) {
+				case STRING_TYPE:
+					sprintf(resp,"printf(\"%%s\",%s);\n",var->name);
+					break;
+				case INT_TYPE:
+					sprintf(resp,"printf(\"%%d\",%s);\n",var->name);
+					break;
+				case DOUBLE_TYPE:
+					sprintf(resp,"printf(\"%%f\",%s);\n",var->name);
+					break;
+				case PRODUCT_TYPE:
+					sprintf(resp,"printf(\"%%s\",%s);\n",var->name);
+					break;
+			}
+		}
+		else {
+			resp = malloc((8+strlen(expr)+2)*sizeof(*resp));
+			sprintf(resp, "printf(%s);\n", expr);
+		}
+		return resp;
+	}
+
+	char *exprToPrintln(char *expr) {
+		char *resp;
+		VARIABLE *var = varSearch(expr);
+		if (var != NULL) {
+			resp = malloc((12+strlen(var->name)+4)*sizeof(*resp));
+			switch(var->type) {
+				case STRING_TYPE:
+					sprintf(resp,"printf(\"%%s\\n\",%s);\n",var->name);
+					break;
+				case INT_TYPE:
+					sprintf(resp,"printf(\"%%d\\n\",%s);\n",var->name);
+					break;
+				case DOUBLE_TYPE:
+					sprintf(resp,"printf(\"%%f\\n\",%s);\n",var->name);
+					break;
+				case PRODUCT_TYPE:
+					sprintf(resp,"printf(\"%%s\\n\",%s);\n",var->name);
+					break;
+			}
+		}
+		else {
+			resp = malloc((8+strlen(expr)+4)*sizeof(*resp));
+			sprintf(resp, "printf(%s\\n);\n", expr);
+		}
+		return resp;
+	}
+
 	//content could be null if var was only declared and not initialized
 	VARIABLE prepareVar(char * type, char * name ,void * content,int constant){
 		VARIABLE ans;
@@ -96,18 +168,6 @@
 
 		return ans;
 	}
-
-	char *concat(int nstr, ...) {
-		va_list strs;
-		char *resp;
-		int i;
-
-		for (i = 0; i < nstr; i++) {
-			resp = strcat(resp, va_arg(strs, char*));
-		}
-		va_end(strs);
-		return resp;
-	}
 %}
 
 %union {
@@ -125,6 +185,10 @@
 %token IF THEN ENDIF
 %nonassoc IFX
 %nonassoc ELSE
+
+%token WHILE ENDWHILE
+
+%token PRINT PRINTLN
 
 %token LE GE NE EQ AND OR INC DEC
 %left '+' '-'
@@ -234,58 +298,32 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 			| 	IF expr '\n' 
 					statement 
 				ENDIF '\n'						{ 
-													$$ = malloc((4+strlen($2)+4+strlen($4)+2)*sizeof(*$$));
-													sprintf($$, "if (%s) {\n%s}\n", $2,$4);
+													$$ = malloc((3+strlen($2)+4+strlen($4)+2)*sizeof(*$$));
+													sprintf($$, "if(%s) {\n%s}\n", $2,$4);
 												}
 			|	IF expr '\n' 
 					statement 
 				ELSE '\n'
 					statement
 				ENDIF '\n' 						{
-													$$ = malloc((4+strlen($2)+4+strlen($4)+9+strlen($7)+2)*sizeof(*$$));
-													sprintf($$, "if (%s) {\n%s}\nelse {\n%s}\n", $2,$4,$7);
+													$$ = malloc((3+strlen($2)+4+strlen($4)+9+strlen($7)+2)*sizeof(*$$));
+													sprintf($$, "if(%s) {\n%s}\nelse {\n%s}\n", $2,$4,$7);
 												}
+			|	WHILE expr '\n'
+					statement
+				ENDWHILE '\n'					{
+													$$ = malloc((6+strlen($2)+4+strlen($4)+2)*sizeof(*$$));
+													sprintf($$, "while(%s) {\n%s}\n", $2,$4);
+												}
+			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3); }
+			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3); }
 			;
-
-/*
-statement	:	VAR '<' '-' expr';' '\n'		{   int ans = validateAsignation($1,$4);
-								    if (ans ==1)
-									printf("%s = %s;\n",$1,$4);
-								    else if (ans == -1){
-									yyerror("NOT DEFINED CONST/VAR ");
-									YYABORT;
-								  }
-								   else if (ans == -2)
-									yyerror("WRONG TYPE FOR VAR ");
-								  else if (ans == -3)
-									yyerror(strcat($1," IS A CONST"));
-								 }
-			| type VAR';' '\n'			{ int ans = addVar(prepareVar($1,$2,NULL,0))
-									if( ans >= 0)
-										printf("%s %s ;\n", $1,$2);
-									else if(ans == -1)
-										yyerror("ALREADY DEFINED CONST/VAR ");
-									else if(ans == -2)
-										yyerror("MAX VARS SIZE REACHED(5000 VARS)"); }
-			| type VAR '<' '-' expr';' '\n'	{  if(validate($1,$5)){
-								int ans = addVar(prepareVar($1,$2,$5,0));
-								if( ans >= 0)
-									printf("%s %s = %s;\n", $1,$2, $5);
-								else if(ans == -1)
-									yyerror("ALREADY DEFINED CONST/VAR ");
-								else if(ans == -2)
-									yyerror("MAX VARS SIZE REACHED(5000 VARS)");
-							   }else
-								yyerror("WRONG VAR DECLARATION");  }
-			|	IF expr '\n' statement				{ printf("if(%s){\n", $2); }
-			;
-*/
 
 expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
 			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
 			| 	STRINGVAL						
 			|	VAR						
-			|	expr '+' expr			{ $$ = strcat(strcat($1,"+"), $3); }
+			|	expr '+' expr			{ $$ = addition($1,$3); }
 			|	expr '-' expr			{ $$ = strcat(strcat($1,"-"), $3); }
 			|	expr '*' expr			{ $$ = strcat(strcat($1,"*"), $3); }
 			|	expr '/' expr			{ $$ = strcat(strcat($1,"/"), $3); }

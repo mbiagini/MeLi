@@ -8,3 +8,12 @@ INT notaB <- 5;
 ELSE
 INT notaC <- 10;
 ENDIF
+INT i <- 0;
+STRING str <- "holis";
+PRINT(i);
+PRINTLN(i);
+PRINT(str);
+PRINTLN(str);
+WHILE i <= 10
+i <- i + 1;
+ENDWHILE
