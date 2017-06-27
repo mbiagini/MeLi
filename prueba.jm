@@ -2,18 +2,7 @@ $$
 INT NOTA <- 5;
 $$
 PRODUCT producto <- {"nombre","descripcion",12,12.5};
-INT nota <- 4;
-IF nota >= 5
-INT notaB <- 5;
-ELSE
-INT notaC <- 10;
-ENDIF
-INT i <- 0;
-STRING str <- "holis";
-PRINT(i);
-PRINTLN(i);
-PRINT(str);
-PRINTLN(str);
-WHILE i <= 10
-i <- i + 1;
-ENDWHILE
+PRINT(producto);
+STRING y <- "chau";
+INT a <- 5;
+PRINT(NOTA);
