@@ -32,29 +32,53 @@
 		return i;	
 	}
 
+	int validateAsignation(char * name,char * content){
+		int i;
+		int found = 0;
+		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
+			if(strcmp(vars[i].name, name) == 0){
+				found = 1;
+			}
+		}
+
+		if(!found){
+		   return -1;
+		}
+		if(vars[i-1].constant)
+			return -3;
+
+		switch(vars[i-1].type){
+			case STRING_TYPE: return validate("char *",content) == 0 ? -2 : 1 ;
+					  break;
+			case INT_TYPE:return validate("int",content) == 0 ? -2 : 1;
+				      break;
+			case DOUBLE_TYPE:return validate("double",content) == 0 ? -2 : 1;
+					 break;
+		}
+		return -4;
+			
+	}
+
 	//content could be null if var was only declared and not initialized
-	VARIABLE prepareVar(char * type, char * name ,void * content){
+	VARIABLE prepareVar(char * type, char * name ,void * content,int constant){
 		VARIABLE ans;
+		ans.constant = constant;
+		ans.name = malloc(strlen(name)+1);
+		strcpy(ans.name,name);
 		if(strcmp(type,"char *")==0){
 			ans.type = STRING_TYPE;	
-			ans.name = malloc(strlen(name)+1);
-			strcpy(ans.name,name);
 			if(content != NULL){
 				ans.content = malloc(strlen((char *)content)+1);
 				memcpy(ans.content,content,strlen((char *)content));
 			}
 		}else if(strcmp(type,"int")==0){
 			ans.type = INT_TYPE;
-			ans.name = malloc(strlen(name)+1);
-			strcpy(ans.name,name);
 			if(content != NULL){
 				ans.content = malloc(sizeof(int));
 				memcpy(ans.content,content,sizeof(int));
 			}
 		}else if(strcmp(type,"double")==0){
 			ans.type = DOUBLE_TYPE;
-			ans.name = malloc(strlen(name)+1);
-			strcpy(ans.name,name);
 			if(content != NULL){
 				ans.content = malloc(sizeof(double));
 				memcpy(ans.content,content,sizeof(double));
@@ -104,11 +128,11 @@ constList 	:	const constList
 			;
 
 const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
-											int ans = addVar(prepareVar($1,$2,$5));
+											int ans = addVar(prepareVar($1,$2,$5,1));
 											if( ans >= 0)
 												printf("const %s %s = %s;\n", $1,$2, $5);
 											else if(ans == -1)
-												yyerror("ALREADY DEFINED CONST/VAR");
+												yyerror("ALREADY DEFINED CONST/VAR ");
 											else if(ans == -2)
 												yyerror("MAX VARS SIZE REACHED(5000 VARS)");
 										 }else
@@ -122,20 +146,31 @@ type 		:	 STRING				{$$="char *";}
 			;
 
 
-statement	:	VAR '<' '-' expr';' '\n'		{ printf("%s = %s;\n",$1,$4); }
-			| type VAR';' '\n'			{ int ans = addVar(prepareVar($1,$2,NULL));
+statement	:	VAR '<' '-' expr';' '\n'		{   int ans = validateAsignation($1,$4);
+								    if (ans ==1)
+									printf("%s = %s;\n",$1,$4);
+								    else if (ans == -1){
+									yyerror("NOT DEFINED CONST/VAR ");
+									YYABORT;
+								  }
+								   else if (ans == -2)
+									yyerror("WRONG TYPE FOR VAR ");
+								  else if (ans == -3)
+									yyerror(strcat($1," IS A CONST"));
+								 }
+			| type VAR';' '\n'			{ int ans = addVar(prepareVar($1,$2,NULL,0));
 									if( ans >= 0)
 										printf("%s %s ;\n", $1,$2);
 									else if(ans == -1)
-										yyerror("ALREADY DEFINED CONST/VAR");
+										yyerror("ALREADY DEFINED CONST/VAR ");
 									else if(ans == -2)
 										yyerror("MAX VARS SIZE REACHED(5000 VARS)"); }
 			| type VAR '<' '-' expr';' '\n'	{  if(validate($1,$5)){
-								int ans = addVar(prepareVar($1,$2,$5));
+								int ans = addVar(prepareVar($1,$2,$5,0));
 								if( ans >= 0)
 									printf("%s %s = %s;\n", $1,$2, $5);
 								else if(ans == -1)
-									yyerror("ALREADY DEFINED CONST/VAR");
+									yyerror("ALREADY DEFINED CONST/VAR ");
 								else if(ans == -2)
 									yyerror("MAX VARS SIZE REACHED(5000 VARS)");
 							   }else

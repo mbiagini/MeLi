@@ -9,6 +9,7 @@ typedef enum
 typedef struct {
 	var_type type;
 	char * name;
+	int constant;
 	void * content;
 } VARIABLE;
 
