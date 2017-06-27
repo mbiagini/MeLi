@@ -307,8 +307,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														YYABORT;
 													}
 												}
-			|	type VAR '<' '-' expr ';' '\n' 	{
-													if (validate($1,$5.expr)) {
+			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.expr)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2)*sizeof(*$$));
@@ -334,9 +333,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															
 														yyerror("wrong var declaration");YYABORT;
 														}
-														$$ = malloc((strlen($2)+strlen($6)+strlen($8)
-															+strlen($10.expr)+strlen($12.expr)+18)*sizeof($$));
-								  						sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+														int ans = addVar(prepareVar("product",$2,NULL,0));
+														if( ans >= 0) {
+															$$ = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+18)*sizeof($$));
+								  							sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+														}
+														else if(ans == -1){
+															yyerror("ALREADY DEFINED CONST/VAR");
+															YYABORT;
+														}
+														else if(ans == -2){
+															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
+														
 													}
 														
 
