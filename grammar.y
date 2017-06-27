@@ -180,7 +180,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 													
 												}
 			|	type VAR ';' '\n'				{
-													int ans = addVar(prepareVar($1,$2,NULL));
+													int ans = addVar(prepareVar($1,$2,NULL,0));
 													if (ans >= 0) {
 														$$ = malloc((strlen($1)+1+strlen($2)+2)*sizeof(*$$));
 														sprintf($$, "%s %s;\n", $1,$2);
@@ -192,7 +192,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{
 													if (validate($1,$5)) {
-														int ans = addVar(prepareVar($1,$2,$5));
+														int ans = addVar(prepareVar($1,$2,$5,0));
 														if( ans >= 0) {
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5)+2)*sizeof(*$$));
 															sprintf($$, "%s %s = %s;\n", $1,$2,$5);
