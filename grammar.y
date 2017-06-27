@@ -55,8 +55,10 @@
 				      break;
 			case DOUBLE_TYPE:return validate("double",content) == 0 ? -2 : 1;
 					 break;
+			case PRODUCT_TYPE:return validate("product",content) == 0 ? -2 : 1;
+					 break;
 		}
-		return -4;
+		return -2;
 			
 	}
 
