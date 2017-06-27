@@ -16,7 +16,7 @@ typeProduct				PRODUCT
 
 lowerCase				[a-z]
 upperCase				[A-Z]
-variableName			[a-z][A-Za-z]+
+variableName			[a-z][A-Za-z]*
 constName				[A-Z]+
 
 digit					[0-9]
@@ -63,7 +63,7 @@ stringVal			[A-Za-z0-9]+
 							return CONST; }
 
 
-[-+()</=$*\n;]			return *yytext;
+[-+()</=$*\n;{},]			return *yytext;
 
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");

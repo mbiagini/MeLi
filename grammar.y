@@ -84,6 +84,12 @@
 				ans.content = malloc(sizeof(double));
 				memcpy(ans.content,content,sizeof(double));
 			}
+		}else if(strcmp(type,"product")==0){
+			ans.type = PRODUCT_TYPE;
+			/*if(content != NULL){
+				ans.content = malloc(sizeof(product));
+				memcpy(ans.content,content,sizeof(double));
+			}*/
 		}
 
 		return ans;
@@ -152,18 +158,24 @@ const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(validate($1,$5)){
 											int ans = addVar(prepareVar($1,$2,$5,1));
 											if( ans >= 0)
 												printf("const %s %s = %s;\n", $1,$2, $5);
-											else if(ans == -1)
+											else if(ans == -1){
 												yyerror("ALREADY DEFINED CONST/VAR ");
-											else if(ans == -2)
+												YYABORT;
+											}
+											else if(ans == -2){
 												yyerror("MAX VARS SIZE REACHED(5000 VARS)");
-										 }else
-											yyerror("WRONG CONST DECLARATION"); }
+												YYABORT;
+											}
+										 }else{
+											yyerror("WRONG CONST DECLARATION");
+											YYABORT;
+										  } }
 			;
 
 type 		:	STRING				{$$="char *";}
 			| 	INT					{$$="int";}
 			| 	DOUBLE				{$$="double";}
-			| 	PRODUCT				{$$="void *";}
+			| 	PRODUCT				{$$="product";}
 			;
 
 statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
@@ -175,8 +187,10 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 									yyerror("NOT DEFINED CONST/VAR ");
 									YYABORT;
 								  }
-								   else if (ans == -2)
+								   else if (ans == -2){
 									yyerror("WRONG TYPE FOR VAR ");
+									YYABORT;
+								  }
 													
 												}
 			|	type VAR ';' '\n'				{
@@ -185,10 +199,14 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 														$$ = malloc((strlen($1)+1+strlen($2)+2)*sizeof(*$$));
 														sprintf($$, "%s %s;\n", $1,$2);
 													}
-													else if(ans == -1)
+													else if(ans == -1){
 														yyerror("ALREADY DEFINED CONST/VAR");
-													else if(ans == -2)
-														yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+														YYABORT;
+													}
+													else if(ans == -2){
+														yyerror("MAX VARS SIZE REACHED(5000 VARS)");	
+														YYABORT;
+													}
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{
 													if (validate($1,$5)) {
@@ -197,13 +215,19 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{int ans = validateAsignation($1,$4);
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5)+2)*sizeof(*$$));
 															sprintf($$, "%s %s = %s;\n", $1,$2,$5);
 														}
-														else if(ans == -1)
+														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
-														else if(ans == -2)
+															YYABORT;
+														}
+														else if(ans == -2){
 															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
 							   						}
-							   						else
+							   						else{
 														yyerror("WRONG VAR DECLARATION");
+														YYABORT;
+													}	
 												}
 			| 	IF expr '\n' 
 					statement 
@@ -274,6 +298,8 @@ expr		:	NUMBER	 					{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
 			| 	'!' expr 				{ $$ = strcat("!",$2); }
 			| '(' expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
 								  sprintf($$,"(%s)",$2);}
+			| '{' STRINGVAL ',' STRINGVAL ',' expr ',' expr '}'				{ $$ = malloc((1+strlen($2)+1+strlen($4)+1+strlen($6)+1+strlen($8)+1)*sizeof(*$$));
+								  sprintf($$,"{%s,%s,%s,%s}",$2,$4,$6,$8);}
 			;
 
 const_expr		:	NUMBER	 			{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
@@ -300,7 +326,9 @@ void yyerror(char *s) {
 int main(void) {
 
     printf("#include <stdlib.h>\n");
-	
+    printf("#include <stdio.h>\n");
+    printf("#include <string.h>\n");
+   printf("#include %cinclude/types.h%c \n",34,34);
     printf("int main(void) { \n");
 
     yyparse();
