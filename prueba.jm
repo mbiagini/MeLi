@@ -3,4 +3,6 @@ INT NOTA <- 5;
 PRODUCT DEFAULT <- {"defaultname","defaultdesct",12.0,12};
 $$
 STRING b <- DEFAULT.NAME;
-PRINT(b);
+STRING y <- "hola";
+INT a <- 5;
+PRINT(5 + "hola" + 4.6 + y);
