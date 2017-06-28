@@ -376,6 +376,21 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 								  					}													
 																					}
 
+			|	VAR '.' GET '(' expr ')' '<' '-' expr ';''\n' 			{VARIABLE * v = varSearch($1);
+																		 if(v ==NULL ){
+																		 	yyerror("VAR ISNT DECLARATED");YYABORT;
+																		  }
+																			if(v->type != PRODUCT_ARRAY_TYPE){
+																				yyerror("VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+																			}if($5.type != INT_TYPE){
+																				yyerror(" index must be an integer");YYABORT;
+																			}if($9.type != PRODUCT_TYPE){
+																				yyerror(" wrong asignation");YYABORT;
+																			}
+																			$$ = malloc((strlen($1)+strlen($5.expr)+strlen($9.expr)+11)*sizeof(*$$));
+																			sprintf($$,"%s.array[%s]=%s;\n",$1,$5.expr,$9.expr);
+																			}
+
 			|VAR '.' field '<' '-' expr ';' '\n' 		{VARIABLE * v = varSearch($1);
 														    if(v == NULL ){
 																yyerror(" var doesnt exist");YYABORT;}
@@ -391,6 +406,22 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 								    																	
 																					}
 
+			|	VAR '.' GET '(' expr ')' '.' field '<' '-' expr ';''\n' 			{VARIABLE * v = varSearch($1);
+																						 if(v ==NULL ){
+																						 	yyerror("VAR ISNT DECLARATED");YYABORT;
+																						  }
+																							if(v->type != PRODUCT_ARRAY_TYPE){
+																								yyerror("VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+																							}if($5.type != INT_TYPE){
+																								yyerror(" index must be an integer");YYABORT;
+																							}if($8.type != $11.type){
+																								yyerror(" wrong asignation");YYABORT;
+																							}
+																							$$ = malloc((strlen($1)+strlen($5.expr)+strlen($8.expr)+strlen($11.expr)+11)*sizeof(*$$));
+																							sprintf($$,"%s.array[%s]%s=%s;\n",$1,$5.expr,$8.expr,$11.expr);
+																					 }
+
+
 			|VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
 																					 if(v == NULL || v->type != PRODUCT_TYPE){
 																					 		yyerror("wrong var type or var doesnt exist");YYABORT;}
@@ -399,7 +430,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																					}
 																					$$ = malloc((strlen($1)+strlen($5)+strlen($7)
 																						+strlen($9.expr)+strlen($11.expr)+35)*sizeof($$));
-															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);	}																			
+															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);	}
+			|VAR '.' GET '(' expr ')' '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
+																											 if(v ==NULL ){
+																											 	yyerror("VAR ISNT DECLARATED");YYABORT;
+																											  }
+																												if(v->type != PRODUCT_ARRAY_TYPE){
+																													yyerror("VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+																												}if($5.type != INT_TYPE){
+																													yyerror(" index must be an integer");YYABORT;
+																												}if($14.type != DOUBLE_TYPE || $16.type!= INT_TYPE){															
+																														yyerror("wrong var initialization");YYABORT;
+																												}
+																												$$ = malloc((4*strlen($1)+4*strlen($5.expr)+strlen($10)+strlen($12)+strlen($14.expr)+strlen($16.expr)+71)*sizeof($$));
+																						  						sprintf($$,"%s.array[%s].name=%s;\n%s.array[%s].description=%s;\n%s.array[%s].price=%s;\n%s.array[%s].qty=%s;\n",$1,$5.expr,$10,$1,$5.expr,$12,$1,$5.expr,$14.expr,$1,$5.expr,$16.expr);	}																				
 			|	type VAR ';' '\n'				{
 													int ans = addVar(prepareVar($1,$2,NULL,0));
 													if (ans >= 0) {
@@ -559,8 +603,23 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														if(v->type != PRODUCT_TYPE){
 															yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
 														}
-														$$ = malloc((strlen($1)+intLength($3)+16)*sizeof(*$$));
+														$$ = malloc((strlen($1)+intLength(100-$3)+16)*sizeof(*$$));
 														sprintf($$,"%s.price*=%d/100.0;\n",$1,(100-$3));
+													 }
+			|	VAR '.' GET '(' expr ')' DISCOUNT NUMBER';''\n' 			{if($8 > 100 || $8 < 0){
+														yyerror("DISCOUNT RECEIVES A NUMBER BETWEEN 0 AND 100");YYABORT;
+													 }
+													 VARIABLE * v = varSearch($1);
+													 if(v ==NULL ){
+													 	yyerror("VAR ISNT DECLARATED");YYABORT;
+													  }
+														if(v->type != PRODUCT_ARRAY_TYPE){
+															yyerror("VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+														}if($5.type != INT_TYPE){
+															yyerror(" index must be an integer");YYABORT;
+														}
+														$$ = malloc((strlen($1)+intLength(100-$8)+24+strlen($5.expr))*sizeof(*$$));
+														sprintf($$,"%s.array[%s].price*=%d/100.0;\n",$1,$5.expr,(100-$8));
 													 }
 
 			

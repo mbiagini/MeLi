@@ -5,5 +5,8 @@ b.NAME <- "chauuuu2";
 a.ADD(b);
 STRING c <- a.GET(0).NAME;
 PRODUCT d <- a.GET(0);
+d.PRICE <- 12.0;
 PRINTLN(c);
 PRINTLN(d);
+a.GET(0) DISCOUNT 50;
+PRINTLN(a.GET(0).PRICE);
