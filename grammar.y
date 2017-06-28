@@ -222,6 +222,12 @@
 				ans.content = malloc(sizeof(product));
 				memcpy(ans.content,content,sizeof(double));
 			}*/
+		}else if(strcmp(type,"product[]")==0){
+			ans.type = PRODUCT_ARRAY_TYPE;
+			/*if(content != NULL){
+				ans.content = malloc(sizeof(product));
+				memcpy(ans.content,content,sizeof(double));
+			}*/
 		}
 
 		return ans;
@@ -235,7 +241,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -280,7 +286,7 @@ constList 	:	const constList
 			;
 
 const 		:	type CONST '<' '-' const_expr ';' '\n' 	{	if (validate($1,$5.type)) {
-														int ans = addVar(prepareVar($1,$2,$5.expr,0));
+														int ans = addVar(prepareVar($1,$2,$5.expr,1));
 														if( ans >= 0) {
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+8)*sizeof(*$$));
 															sprintf($$, "const %s %s = %s;\n", $1,$2,$5.expr);
@@ -306,7 +312,7 @@ const 		:	type CONST '<' '-' const_expr ';' '\n' 	{	if (validate($1,$5.type)) {
 															
 														yyerror("wrong const declaration");YYABORT;
 														}
-														int ans = addVar(prepareVar("product",$2,NULL,0));
+														int ans = addVar(prepareVar("product",$2,NULL,1));
 														if( ans >= 0) {
 															$$ = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+24)*sizeof($$));
 								  							sprintf($$,"const product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
@@ -402,8 +408,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|	PRODUCT VAR ';' '\n'				{
 													int ans = addVar(prepareVar("product",$2,NULL,0));
 													if (ans >= 0) {
-														$$ = malloc((3*strlen($2)+37)*sizeof(*$$));
-														sprintf($$, "product %s;\n%s.name=\"\";\n%s.description=\"\";\n", $2,$2,$2);
+														$$ = malloc((5*strlen($2)+57)*sizeof(*$$));
+														sprintf($$, "product %s;\n%s.name=\"\";\n%s.description=\"\";\n%s.price=0.0;\n%s.qty=0;\n", $2,$2,$2,$2,$2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED VAR");
@@ -413,6 +419,36 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														yyerror("MAX VARS SIZE REACHED(5000 VARS)");	
 														YYABORT;
 													}
+												}
+
+			|	PRODUCT VAR'['']' ';' '\n'				{
+													int ans = addVar(prepareVar("product[]",$2,NULL,0));
+													if (ans >= 0) {
+														$$ = malloc((3*strlen($2)+59)*sizeof(*$$));
+														sprintf($$, "product_array %s;\n%s.array = malloc(sizeof(product));\n%s.size=0;\n", $2,$2,$2);
+													}
+													else if(ans == -1){
+														yyerror("ALREADY DEFINED VAR");
+														YYABORT;
+													}
+													else if(ans == -2){
+														yyerror("MAX VARS SIZE REACHED(5000 VARS)");	
+														YYABORT;
+													}
+												}
+
+			|	 VAR'.'ADD'('VAR')'';''\n'			{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($5);
+												 if(v ==NULL || v2 ==NULL){
+												 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+												  }
+													if(v->type != PRODUCT_ARRAY_TYPE){
+														yyerror("FIRST VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+													}if(v2->type != PRODUCT_TYPE){
+														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ");YYABORT;
+													}
+													$$ = malloc((5*strlen($1)+strlen($5)+68)*sizeof(*$$));
+													sprintf($$,"%s.array[%s.size]=%s;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1);													
+													
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));

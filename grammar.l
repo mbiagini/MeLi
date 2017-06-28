@@ -43,6 +43,7 @@ stringVal				[A-Za-z0-9]+
 "DISCOUNT"					{return DISCOUNT;}
 "GOTSTOCK"					{return GOTSTOCK;}
 "EQUALS"					{return EQUALS;}
+"ADD"					{return ADD;}
 "IF"					{ return IF; }
 "THEN"					{ return THEN; }
 "ELSE"					{ return ELSE; }
@@ -85,7 +86,7 @@ stringVal				[A-Za-z0-9]+
 
 
 
-[-+()</=$*\n;{},\.]			return *yytext;
+[-+()</=$*\n;{},\.\[\]]			return *yytext;
 
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");
