@@ -1,8 +1,6 @@
 $$
 INT NOTA <- 5;
+PRODUCT DEFAULT <- {"defaultname","defaultdesct",12.0,12};
 $$
-PRODUCT producto <- {"nombre","descripcion",12,12.5};
-PRINT(producto);
-STRING y <- "chau";
-INT a <- 5;
-PRINT(NOTA);
+STRING b <- DEFAULT.NAME;
+PRINT(b);

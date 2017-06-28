@@ -255,9 +255,9 @@
 %left INC DEC '<' '>' LE GE NE EQ AND OR
 
 
-%type <string> block statement;
+%type <string> block statement const;
 %type <expre> expr;
-%type <string> const_expr;
+%type <expre> const_expr;
 %type <string> type;
 %type <expre> field;
 
@@ -279,22 +279,49 @@ constList 	:	const constList
 			|	/* NULL */
 			;
 
-const 		:	type CONST '<' '-' const_expr ';' '\n'			{if(1/*validate($1,$5)   TODO*/){
-											int ans = addVar(prepareVar($1,$2,$5,1));
-											if( ans >= 0)
-												printf("const %s %s = %s;\n", $1,$2, $5);
-											else if(ans == -1){
-												yyerror("ALREADY DEFINED CONST/VAR ");
-												YYABORT;
-											}
-											else if(ans == -2){
-												yyerror("MAX VARS SIZE REACHED(5000 VARS)");
-												YYABORT;
-											}
-										 }else{
-											yyerror("WRONG CONST DECLARATION");
-											YYABORT;
-										  } }
+const 		:	type CONST '<' '-' const_expr ';' '\n' 	{	if (validate($1,$5.type)) {
+														int ans = addVar(prepareVar($1,$2,$5.expr,0));
+														if( ans >= 0) {
+															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+8)*sizeof(*$$));
+															sprintf($$, "const %s %s = %s;\n", $1,$2,$5.expr);
+															printf("%s",$$);
+														}
+														else if(ans == -1){
+															yyerror("ALREADY DEFINED CONST");
+															YYABORT;
+														}
+														else if(ans == -2){
+															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
+							   						}
+							   						else{
+														yyerror("WRONG CONST DECLARATION");
+														YYABORT;
+													}	
+												}
+
+
+			|	PRODUCT CONST '<' '-' '{'STRINGVAL ','STRINGVAL ','const_expr','const_expr'}' ';' '\n' 	{	if($10.type != DOUBLE_TYPE || $12.type!= INT_TYPE){
+															
+														yyerror("wrong const declaration");YYABORT;
+														}
+														int ans = addVar(prepareVar("product",$2,NULL,0));
+														if( ans >= 0) {
+															$$ = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+24)*sizeof($$));
+								  							sprintf($$,"const product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+								  							printf("%s",$$);
+														}
+														else if(ans == -1){
+															yyerror("ALREADY DEFINED CONST");
+															YYABORT;
+														}
+														else if(ans == -2){
+															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
+														
+													}
 			;
 
 type 		:	STRING				{$$="char *";}
@@ -363,7 +390,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														sprintf($$, "%s %s;\n", $1,$2);
 													}
 													else if(ans == -1){
-														yyerror("ALREADY DEFINED CONST/VAR");
+														yyerror("ALREADY DEFINED VAR");
 														YYABORT;
 													}
 													else if(ans == -2){
@@ -379,7 +406,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														sprintf($$, "product %s;\n", $2);
 													}
 													else if(ans == -1){
-														yyerror("ALREADY DEFINED CONST/VAR");
+														yyerror("ALREADY DEFINED VAR");
 														YYABORT;
 													}
 													else if(ans == -2){
@@ -409,7 +436,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 												}
 
 
-			|	PRODUCT VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n' 	{	if($10.type != INT_TYPE || $12.type!= DOUBLE_TYPE){
+			|	PRODUCT VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n' 	{	if($10.type != DOUBLE_TYPE || $12.type!= INT_TYPE){
 															
 														yyerror("wrong var declaration");YYABORT;
 														}
@@ -492,7 +519,18 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								    if(v == NULL ){
 										yyerror("const doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
-								}					
+								}	
+
+			|	CONST'.'field				{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" const doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_TYPE){
+													yyerror(" const must be a product");YYABORT;
+												}
+												$$.expr = malloc((strlen($1)+strlen($3.expr))*sizeof(*($$.expr)));
+											   sprintf($$.expr,"%s%s",$1,$3.expr);
+											   $$.type=$3.type;
+											}				
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
@@ -509,15 +547,39 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
 
-const_expr		:	NUMBER	 			{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%d", $1); }
-			|	DOUBLENUMBER				{ $$ = malloc(256*sizeof(*$$)); sprintf($$, "%f", $1); }
-			| 	STRINGVAL												
-			|	const_expr '+' const_expr			{ $$ = strcat(strcat($1,"+"), $3); }
-			|	const_expr '-' const_expr			{ $$ = strcat(strcat($1,"-"), $3); }
-			|	const_expr '*' const_expr			{ $$ = strcat(strcat($1,"*"), $3); }
-			|	const_expr '/' const_expr			{ $$ = strcat(strcat($1,"/"), $3); }
-			| '(' const_expr ')'				{ $$ = malloc((1+strlen($2)+1)*sizeof(*$$));
-								  sprintf($$,"(%s)",$2);}
+const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
+			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
+			|	const_expr '+' const_expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
+			|	CONST'.'field				{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" const doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_TYPE){
+													yyerror(" const must be a product");YYABORT;
+												}
+												$$.expr = malloc((strlen($1)+strlen($3.expr))*sizeof(*($$.expr)));
+											   sprintf($$.expr,"%s%s",$1,$3.expr);
+											   $$.type=$3.type;
+											}
+			|	CONST				{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror("const doesnt exist");YYABORT;}
+								   $$.expr = $1;$$.type=v->type;
+								}					
+			|	const_expr '-' const_expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	const_expr '*' const_expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	const_expr '/' const_expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	const_expr '<' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	const_expr '>' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	const_expr LE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr GE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr NE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"!="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr EQ const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr AND const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr OR const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	'!' const_expr 				{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
+			| '(' const_expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1)*sizeof(*($$.expr)));
+								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
 
 
