@@ -40,3 +40,12 @@ var_type validExpr(expresion e1,expresion e2){
 		return e1.type;
 	return INT_TYPE;
 }
+
+int intLength(int num){
+	int i =0;
+	while(num > 0){
+		num = num/10;
+		i++;
+	}
+	return i;
+}
