@@ -235,7 +235,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -402,8 +402,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|	PRODUCT VAR ';' '\n'				{
 													int ans = addVar(prepareVar("product",$2,NULL,0));
 													if (ans >= 0) {
-														$$ = malloc((7+1+strlen($2)+2)*sizeof(*$$));
-														sprintf($$, "product %s;\n", $2);
+														$$ = malloc((3*strlen($2)+37)*sizeof(*$$));
+														sprintf($$, "product %s;\n%s.name=\"\";\n%s.description=\"\";\n", $2,$2,$2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED VAR");
@@ -524,8 +524,20 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 													if(v->type != PRODUCT_TYPE){
 														yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
 													}
-													$$.expr = malloc((strlen($3)+6)*sizeof(*($$.expr)));
-													sprintf($$.expr,"%s.qty>0",$3);
+													$$.expr = malloc((strlen($3)+8)*sizeof(*($$.expr)));
+													sprintf($$.expr,"(%s.qty>0)",$3);
+													$$.type = INT_TYPE;
+												 }
+
+			|	VAR EQUALS VAR 			{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($3);
+												 if(v ==NULL || v2 ==NULL){
+												 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+												  }
+													if(v->type != PRODUCT_TYPE || v2->type != PRODUCT_TYPE){
+														yyerror("AT LEAST ONE VAR ISNT OF TYPE PRODUCT");YYABORT;
+													}
+													$$.expr = malloc((4*strlen($3)+4*strlen($1)+100)*sizeof(*($$.expr)));
+													sprintf($$.expr,"(strcmp(%s.name,%s.name)==0 && strcmp(%s.description,%s.description)==0 && %s.price == %s.price && %s.qty == %s.qty)",$1,$3,$1,$3,$1,$3,$1,$3);
 													$$.type = INT_TYPE;
 												 }
 			|	CONST				{VARIABLE * v = varSearch($1);

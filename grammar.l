@@ -42,7 +42,7 @@ stringVal				[A-Za-z0-9]+
 
 "DISCOUNT"					{return DISCOUNT;}
 "GOTSTOCK"					{return GOTSTOCK;}
-
+"EQUALS"					{return EQUALS;}
 "IF"					{ return IF; }
 "THEN"					{ return THEN; }
 "ELSE"					{ return ELSE; }
