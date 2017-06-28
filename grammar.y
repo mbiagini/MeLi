@@ -458,7 +458,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ");YYABORT;
 													}
 													$$ = malloc((6*strlen($1)+strlen($5)+77)*sizeof(*$$));
-													sprintf($$,"%s.array[%s.size]=%s;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n%s.size++;\n",$1,$1,$5,$1,$1,$1,$1);													
+													sprintf($$,"%s.array[%s.size]=%s;\n%s.size++;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1,$1);													
 													
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
