@@ -72,12 +72,35 @@
 		return NULL;
 	}
 
-	char *addition(char *expr1, char *expr2) {
-		VARIABLE *var1 = varSearch(expr1);
-		VARIABLE *var2 = varSearch(expr2);
-		if (var1 != NULL && var2 != NULL && var1->type == PRODUCT_TYPE && var2->type == PRODUCT_TYPE)
-			;			/* implement prod + prod */
-		return strcat(strcat(expr1,"+"), expr2);
+	char *addition(expresion expr1, expresion expr2) {
+		VARIABLE *var1 = varSearch(expr1.expr);
+		VARIABLE *var2 = varSearch(expr2.expr);
+
+		char *str1, *str2;
+		if (var1 == NULL)
+			str1 = expr1.expr;
+		else
+			str1 = (char *)var1->content;
+		if (var2 == NULL)
+			str2 = expr2.expr;
+		else
+			str2 = (char *)var2->content;
+		if (expr1.type == STRING_TYPE) {
+			char *aux1 = malloc(strlen(str1)*sizeof(*aux1));
+			memcpy(aux1, str1, strlen(str1)-1);
+			if (expr2.type == STRING_TYPE)
+				return strcat(aux1, str2+1);
+			if (expr2.type == INT_TYPE || expr2.type == DOUBLE_TYPE)
+				return strcat(strcat(aux1, str2), "\"");
+		}
+		if (expr2.type == STRING_TYPE) {
+			return strcat(strcat("\"",str1), str2+1);
+		}
+		if (expr1.type != PRODUCT_TYPE && expr2.type != PRODUCT_TYPE)
+			return strcat(strcat(str1, "+"), str2);
+		if (expr1.type == PRODUCT_TYPE && expr2.type == PRODUCT_TYPE) {
+			;	/* TODO: implement suma de productos. */
+		}
 	}
 
 	char *exprToPrint(char *expr) {
@@ -123,7 +146,7 @@
 					sprintf(resp,"printf(\"%%f\\n\",%s);\n",var->name);
 					break;
 				case PRODUCT_TYPE:
-					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\n\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
+					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\\n\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
 					break;
 			}
 		}
@@ -391,13 +414,13 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
 			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
-			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}			
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
+			|	expr '+' expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
 			|	VAR				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
 										yyerror("wrong var type or var doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
 								}					
-			|	expr '+' expr			{$$.type = validExpr($1,$3); if($$.type != -1){$$.expr = addition($1.expr,$3.expr);}else{yyerror("WRONG EXPR");YYABORT;} }
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 

@@ -30,7 +30,7 @@ int countCharInString(char * str, char c){
 	return count;
 }
 
-var_type validExpr(expresion e1,expresion e2){
+var_type validExpr(expresion e1,expresion e2) {
 	if(e1.type == STRING_TYPE && e2.type != STRING_TYPE)
 		return -1;
 	if(e2.type == STRING_TYPE && e1.type != STRING_TYPE){
@@ -41,6 +41,7 @@ var_type validExpr(expresion e1,expresion e2){
 	return INT_TYPE;
 }
 
+
 int intLength(int num){
 	int i =0;
 	while(num > 0){
@@ -48,4 +49,22 @@ int intLength(int num){
 		i++;
 	}
 	return i;
+}
+
+var_type validAddExpr(expresion e1, expresion e2) {
+	if (e1.type == PRODUCT_TYPE && e2.type != PRODUCT_TYPE)
+		return -1;
+	if (e2.type == PRODUCT_TYPE && e1.type != PRODUCT_TYPE)
+		return -1;
+	if (e1.type == STRING_TYPE || e2.type == STRING_TYPE)
+		return STRING_TYPE;
+	if (e1.type == e2.type) {
+		if (e1.type == PRODUCT_TYPE)
+			return PRODUCT_TYPE;		/* TODO: should return *PRODUCT_TYPE */
+		return e1.type;
+	}
+	if (e1.type == DOUBLE_TYPE || e2.type == DOUBLE_TYPE)
+		return DOUBLE_TYPE;
+	return INT_TYPE;
+
 }
