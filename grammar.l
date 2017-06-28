@@ -41,6 +41,7 @@ stringVal				[A-Za-z0-9]+
 "--"					{ return DEC; }
 
 "DISCOUNT"					{return DISCOUNT;}
+"GOTSTOCK"					{return GOTSTOCK;}
 
 "IF"					{ return IF; }
 "THEN"					{ return THEN; }

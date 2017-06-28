@@ -235,8 +235,8 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK
-%token <string> VAR CONST STRINGVAL 
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK
+%token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
 
@@ -492,8 +492,10 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
 														}
 														$$ = malloc((strlen($1)+intLength($3)+16)*sizeof(*$$));
-														sprintf($$,"%s.price*=%d/100.0;\n",$1,$3);
+														sprintf($$,"%s.price*=%d/100.0;\n",$1,(100-$3));
 													 }
+
+			
 			;
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
@@ -515,6 +517,17 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								   sprintf($$.expr,"%s%s",$1,$3.expr);
 								   $$.type=$3.type;
 								}
+			|	GOTSTOCK'('VAR')' 			{VARIABLE * v = varSearch($3);
+												 if(v ==NULL ){
+												 	yyerror("VAR ISNT DECLARATED");YYABORT;
+												  }
+													if(v->type != PRODUCT_TYPE){
+														yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
+													}
+													$$.expr = malloc((strlen($3)+6)*sizeof(*($$.expr)));
+													sprintf($$.expr,"%s.qty>0",$3);
+													$$.type = INT_TYPE;
+												 }
 			|	CONST				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
 										yyerror("const doesnt exist");YYABORT;}
