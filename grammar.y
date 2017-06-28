@@ -252,7 +252,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -277,6 +277,7 @@
 %type <expre> const_expr;
 %type <string> type;
 %type <expre> field;
+%type <expre> get;
 
 
 
@@ -350,6 +351,11 @@ field 		:	NAME				{$$.expr=".name";$$.type=STRING_TYPE;}
 			| 	DESC					{$$.expr=".description";$$.type=STRING_TYPE;}
 			| 	PRICE				{$$.expr=".price";$$.type=DOUBLE_TYPE;}
 			| 	STOCK				{$$.expr=".qty";$$.type=INT_TYPE;}
+			;
+
+get		:	GETINT						{$$.expr="%d";$$.type=INT_TYPE;}
+			| 	GETDOUBLE					{$$.expr="%lf";$$.type=DOUBLE_TYPE;}
+			| 	GETSTRING				{$$.expr="%s";$$.type=STRING_TYPE;}
 			;
 
 
@@ -621,6 +627,22 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														$$ = malloc((strlen($1)+intLength(100-$8)+24+strlen($5.expr))*sizeof(*$$));
 														sprintf($$,"%s.array[%s].price*=%d/100.0;\n",$1,$5.expr,(100-$8));
 													 }
+			|	get VAR  ';''\n' 			{ VARIABLE * v = varSearch($2);
+													 if(v ==NULL ){
+													 	yyerror("VAR ISNT DECLARATED");YYABORT;
+													  }
+														if(v->type != $1.type){
+															yyerror("wrong var type");YYABORT;
+														}
+														if($1.type != STRING_TYPE){
+															$$ = malloc((strlen($1.expr)+strlen($2)+13)*sizeof(*$$));
+															sprintf($$,"scanf(\"%s\",&%s);\n",$1.expr,$2);
+														}
+														else{//lee como maximo 255 caracteres
+																$$ = malloc((strlen($1.expr)+2*strlen($2)+159)*sizeof(*$$));
+															sprintf($$,"scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$2);
+														}
+													 }
 
 			
 			;
@@ -792,7 +814,7 @@ int main(void) {
     printf("#include \"include/utils.h\"\n");
     printf("#include \"include/types.h\"\n");
     printf("int main(void) { \n");
-
+    printf("char AUX_STRING_READER1[256]={0}; \n");
     yyparse();
 
     printf("}\n");

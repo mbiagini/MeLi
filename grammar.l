@@ -55,6 +55,9 @@ stringVal				[A-Za-z0-9]+
 
 "PRINT"					{ return PRINT; }
 "PRINTLN"				{ return PRINTLN; }
+"GETINT TO"				{ return GETINT; }
+"GETDOUBLE TO"			{ return GETDOUBLE; }
+"GETSTRING TO"			{ return GETSTRING; }
 
 "NAME"					{return NAME;}
 "DESC"					{return DESC;}
