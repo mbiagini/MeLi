@@ -79,15 +79,15 @@
 		if (var1 == NULL && var2 == NULL) {
 			if (expr1.type == STRING_TYPE) {
 				if (expr2.type == STRING_TYPE)
-					return strcat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr+1);
+					return concat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr+1);
 				if (expr2.type == INT_TYPE || expr2.type == DOUBLE_TYPE)
-					return strcat(strcat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr), "\"");
+					return concat(concat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr), "\"");
 			}
 			if (expr2.type == STRING_TYPE) {
-				return strcat(strcat("\"",expr1.expr), expr2.expr+1);
+				return concat(concat("\"",expr1.expr), expr2.expr+1);
 			}
 			if (expr1.type != PRODUCT_TYPE && expr2.type != PRODUCT_TYPE)
-				return strcat(strcat(expr1.expr, "+"), expr2.expr);
+				return concat(concat(expr1.expr, "+"), expr2.expr);
 			if (expr1.type == PRODUCT_TYPE && expr2.type == PRODUCT_TYPE) {
 				return NULL;	/* TODO: implement suma de productos. */
 			}
@@ -104,90 +104,101 @@
 		else { strVar1 = expr1.expr; type1 = expr1.type; }
 		if (var2 != NULL) { strVar2 = var2->name; type2 = var2->type; }
 		else { strVar2 = expr2.expr; type2 = expr2.type; }
-		switch(type1) {
-			case STRING_TYPE:
-				str1 = malloc(strlen(strVar1));
-				sprintf(str1, "%s", strVar1);
-				break;
-			case INT_TYPE:
-				str1 = malloc(strlen("intToChar(")+strlen(strVar1)+strlen(")"));
-				sprintf(str1, "intToChar(%s)", strVar1);
-				break;
-			case DOUBLE_TYPE:
-				str1 = malloc(strlen("doubleToChar(")+strlen(strVar1)+strlen(")"));
-				sprintf(str1, "doubleToChar(%s)", strVar1);
-				break;
-		}
-		switch(type2) {
-			case STRING_TYPE:
-				str2 = malloc(strlen(strVar2));
-				sprintf(str2, "%s", strVar2);
-				break;
-			case INT_TYPE:
-				str2 = malloc(strlen("intToChar(")+strlen(strVar2)+strlen(")"));
-				sprintf(str2, "intToChar(%s)", strVar2);
-				break;
-			case DOUBLE_TYPE:
-				str2 = malloc(strlen("doubleToChar(")+strlen(strVar2)+strlen(")"));
-				sprintf(str2, "doubleToChar(%s)", strVar2);
-				break;
-		}
 
-		char *resp = malloc(strlen("concat(")+strlen(str1)+strlen(",")+strlen(str2)+strlen(")"));
-		sprintf(resp, "concat(%s,%s)", str1, str2);
+		if (type1 == STRING_TYPE || type2 == STRING_TYPE) {
+			switch(type1) {
+				case STRING_TYPE:
+					str1 = malloc(strlen(strVar1));
+					sprintf(str1, "%s", strVar1);
+					break;
+				case INT_TYPE:
+					str1 = malloc(strlen("intToChar(")+strlen(strVar1)+strlen(")"));
+					sprintf(str1, "intToChar(%s)", strVar1);
+					break;
+				case DOUBLE_TYPE:
+					str1 = malloc(strlen("doubleToChar(")+strlen(strVar1)+strlen(")"));
+					sprintf(str1, "doubleToChar(%s)", strVar1);
+					break;
+			}
+			switch(type2) {
+				case STRING_TYPE:
+					str2 = malloc(strlen(strVar2));
+					sprintf(str2, "%s", strVar2);
+					break;
+				case INT_TYPE:
+					str2 = malloc(strlen("intToChar(")+strlen(strVar2)+strlen(")"));
+					sprintf(str2, "intToChar(%s)", strVar2);
+					break;
+				case DOUBLE_TYPE:
+					str2 = malloc(strlen("doubleToChar(")+strlen(strVar2)+strlen(")"));
+					sprintf(str2, "doubleToChar(%s)", strVar2);
+					break;
+			}
+			char *resp = malloc(strlen("concat(")+strlen(str1)+strlen(",")+strlen(str2)+strlen(")"));
+			sprintf(resp, "concat(%s,%s)", str1, str2);
+			return resp;
+		}
+		char *resp = malloc(strlen(strVar1)+strlen("+")+strlen(strVar2));
+		resp = concat(concat(strVar1,"+"),strVar2);
 		return resp;
 	}
 
-	char *exprToPrint(char *expr) {
-		char *resp;
-		VARIABLE *var = varSearch(expr);
-		if (var != NULL) {
-			resp = malloc((12+strlen(var->name)+3));
-			switch(var->type) {
-				case STRING_TYPE:
-					sprintf(resp,"printf(\"%%s\",%s);\n",var->name);
-					break;
-				case INT_TYPE:
-					sprintf(resp,"printf(\"%%d\",%s);\n",var->name);
-					break;
-				case DOUBLE_TYPE:
-					sprintf(resp,"printf(\"%%f\",%s);\n",var->name);
-					break;
-				case PRODUCT_TYPE:
-					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
-					break;
-			}
-		}
-		else {
-			resp = malloc((8+strlen(expr)+2)*sizeof(*resp));
-			sprintf(resp, "printf(\"%%s\",%s);\n", expr);
+	char *exprToPrint(expresion expr) {
+		VARIABLE *var = varSearch(expr.expr);
+		char *resp, *strVar;
+		if (var != NULL)
+			strVar = var->name;
+		else
+			strVar = expr.expr;
+
+		if (expr.type == PRODUCT_TYPE)
+			resp = malloc(strlen("printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\",")+
+								4*strlen(strVar)+strlen(".name,")+strlen(".description,")+strlen(".price,")+strlen(".qty);"));
+		else
+			resp = malloc(strlen("printf(\"%%s\",")+strlen(strVar)+strlen(");\n"));
+		switch(expr.type) {
+			case STRING_TYPE:
+				sprintf(resp,"printf(\"%%s\",%s);\n",strVar);
+				break;
+			case INT_TYPE:
+				sprintf(resp,"printf(\"%%d\",%s);\n",strVar);
+				break;
+			case DOUBLE_TYPE:
+				sprintf(resp,"printf(\"%%f\",%s);\n",strVar);
+				break;
+			case PRODUCT_TYPE:
+				sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\",%s.name,%s.description,%s.price,%s.qty);\n",strVar,strVar,strVar,strVar);
+				break;
 		}
 		return resp;
 	}
 
-	char *exprToPrintln(char *expr) {
-		char *resp;
-		VARIABLE *var = varSearch(expr);
-		if (var != NULL) {
-			resp = malloc((12+strlen(var->name)+4)*sizeof(*resp));
-			switch(var->type) {
-				case STRING_TYPE:
-					sprintf(resp,"printf(\"%%s\\n\",%s);\n",var->name);
-					break;
-				case INT_TYPE:
-					sprintf(resp,"printf(\"%%d\\n\",%s);\n",var->name);
-					break;
-				case DOUBLE_TYPE:
-					sprintf(resp,"printf(\"%%f\\n\",%s);\n",var->name);
-					break;
-				case PRODUCT_TYPE:
-					sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\\n\",%s.name,%s.description,%s.price,%s.qty);\n",var->name,var->name,var->name,var->name);
-					break;
-			}
-		}
-		else {
-			resp = malloc((8+strlen(expr)+4)*sizeof(*resp));
-			sprintf(resp, "printf(%s\\n);\n", expr);
+	char *exprToPrintln(expresion expr) {
+		VARIABLE *var = varSearch(expr.expr);
+		char *resp, *strVar;
+		if (var != NULL)
+			strVar = var->name;
+		else
+			strVar = expr.expr;
+
+		if (expr.type == PRODUCT_TYPE)
+			resp = malloc(strlen("printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\\n\",")+
+								4*strlen(strVar)+strlen(".name,")+strlen(".description,")+strlen(".price,")+strlen(".qty);\n"));
+		else
+			resp = malloc(strlen("printf(\"%%s\\n\",")+strlen(strVar)+strlen(");\n"));
+		switch(expr.type) {
+			case STRING_TYPE:
+				sprintf(resp,"printf(\"%%s\\n\",%s);\n",strVar);
+				break;
+			case INT_TYPE:
+				sprintf(resp,"printf(\"%%d\\n\",%s);\n",strVar);
+				break;
+			case DOUBLE_TYPE:
+				sprintf(resp,"printf(\"%%f\\n\",%s);\n",strVar);
+				break;
+			case PRODUCT_TYPE:
+				sprintf(resp,"printf(\"Name: %%s, Description: %%s, Price: %%f, Quantity: %%d\\n\",%s.name,%s.description,%s.price,%s.qty);\n",strVar,strVar,strVar,strVar);
+				break;
 		}
 		return resp;
 	}
@@ -493,8 +504,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													}
 														
 
-			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3.expr); }
-			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3.expr); }
+			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3); }
+			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3); }
 			| 	IF expr '\n' 
 					block 
 				ENDIF '\n'						{ 
