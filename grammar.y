@@ -8,12 +8,10 @@
 	#include "include/types.h"
 	#define MAX_VARS 5000
 
-
 	int yylex(void);
 	void yyerror(char *);
 	extern int yylineno;
 
-	
 
 	VARIABLE  vars[MAX_VARS] = {0};
 
@@ -76,31 +74,66 @@
 		VARIABLE *var1 = varSearch(expr1.expr);
 		VARIABLE *var2 = varSearch(expr2.expr);
 
-		char *str1, *str2;
-		if (var1 == NULL)
-			str1 = expr1.expr;
-		else
-			str1 = (char *)var1->content;
-		if (var2 == NULL)
-			str2 = expr2.expr;
-		else
-			str2 = (char *)var2->content;
-		if (expr1.type == STRING_TYPE) {
-			char *aux1 = malloc(strlen(str1)*sizeof(*aux1));
-			memcpy(aux1, str1, strlen(str1)-1);
-			if (expr2.type == STRING_TYPE)
-				return strcat(aux1, str2+1);
-			if (expr2.type == INT_TYPE || expr2.type == DOUBLE_TYPE)
-				return strcat(strcat(aux1, str2), "\"");
+		if (var1 == NULL && var2 == NULL) {
+			if (expr1.type == STRING_TYPE) {
+				if (expr2.type == STRING_TYPE)
+					return strcat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr+1);
+				if (expr2.type == INT_TYPE || expr2.type == DOUBLE_TYPE)
+					return strcat(strcat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr), "\"");
+			}
+			if (expr2.type == STRING_TYPE) {
+				return strcat(strcat("\"",expr1.expr), expr2.expr+1);
+			}
+			if (expr1.type != PRODUCT_TYPE && expr2.type != PRODUCT_TYPE)
+				return strcat(strcat(expr1.expr, "+"), expr2.expr);
+			if (expr1.type == PRODUCT_TYPE && expr2.type == PRODUCT_TYPE) {
+				return NULL;	/* TODO: implement suma de productos. */
+			}
 		}
-		if (expr2.type == STRING_TYPE) {
-			return strcat(strcat("\"",str1), str2+1);
+
+		if (var1 != NULL && var2 != NULL && var1->type == PRODUCT_TYPE && var2->type == PRODUCT_TYPE) {
+			return NULL;	/* TODO: implement suma de productos. */
 		}
-		if (expr1.type != PRODUCT_TYPE && expr2.type != PRODUCT_TYPE)
-			return strcat(strcat(str1, "+"), str2);
-		if (expr1.type == PRODUCT_TYPE && expr2.type == PRODUCT_TYPE) {
-			;	/* TODO: implement suma de productos. */
+
+		char *strVar1, *strVar2, *str1, *str2;
+		var_type type1, type2;
+
+		if (var1 != NULL) { strVar1 = var1->name; type1 = var1->type; }
+		else { strVar1 = expr1.expr; type1 = expr1.type; }
+		if (var2 != NULL) { strVar2 = var2->name; type2 = var2->type; }
+		else { strVar2 = expr2.expr; type2 = expr2.type; }
+		switch(type1) {
+			case STRING_TYPE:
+				str1 = malloc(strlen(strVar1));
+				sprintf(str1, "%s", strVar1);
+				break;
+			case INT_TYPE:
+				str1 = malloc(strlen("intToChar(")+strlen(strVar1)+strlen(")"));
+				sprintf(str1, "intToChar(%s)", strVar1);
+				break;
+			case DOUBLE_TYPE:
+				str1 = malloc(strlen("doubleToChar(")+strlen(strVar1)+strlen(")"));
+				sprintf(str1, "doubleToChar(%s)", strVar1);
+				break;
 		}
+		switch(type2) {
+			case STRING_TYPE:
+				str2 = malloc(strlen(strVar2));
+				sprintf(str2, "%s", strVar2);
+				break;
+			case INT_TYPE:
+				str2 = malloc(strlen("intToChar(")+strlen(strVar2)+strlen(")"));
+				sprintf(str2, "intToChar(%s)", strVar2);
+				break;
+			case DOUBLE_TYPE:
+				str2 = malloc(strlen("doubleToChar(")+strlen(strVar2)+strlen(")"));
+				sprintf(str2, "doubleToChar(%s)", strVar2);
+				break;
+		}
+
+		char *resp = malloc(strlen("concat(")+strlen(str1)+strlen(",")+strlen(str2)+strlen(")"));
+		sprintf(resp, "concat(%s,%s)", str1, str2);
+		return resp;
 	}
 
 	char *exprToPrint(char *expr) {
@@ -125,7 +158,7 @@
 		}
 		else {
 			resp = malloc((8+strlen(expr)+2)*sizeof(*resp));
-			sprintf(resp, "printf(%s);\n", expr);
+			sprintf(resp, "printf(\"%%s\",%s);\n", expr);
 		}
 		return resp;
 	}
@@ -448,7 +481,7 @@ int main(void) {
     printf("#include <stdlib.h>\n");
     printf("#include <stdio.h>\n");
     printf("#include <string.h>\n");
-    printf("#include \"include/types.h\" \n");
+    printf("#include \"include/types.h\"\n");
     printf("int main(void) { \n");
 
     yyparse();

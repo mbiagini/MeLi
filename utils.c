@@ -57,3 +57,27 @@ var_type validAddExpr(expresion e1, expresion e2) {
 		return DOUBLE_TYPE;
 	return INT_TYPE;
 }
+
+char *substr(char *str, int start, int end) {
+	char *resp = malloc(strlen(str));
+	memcpy(resp, str+start, end - start);
+	return resp;
+}
+
+char *concat(char*str1,char*str2) {
+	char *resp = malloc(strlen(str1)+strlen(str2));
+	sprintf(resp, "%s%s", str1, str2);
+	return resp;
+}
+
+char *intToChar(int i) {
+	char *resp = malloc(15);
+	sprintf(resp,"%d",i);
+	return resp;
+}
+
+char *doubleToChar(double d) {
+	char *resp = malloc(20);
+	sprintf(resp,"%f",d);
+	return resp;
+}
