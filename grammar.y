@@ -70,6 +70,8 @@
 		return NULL;
 	}
 
+
+
 	char *addition(expresion expr1, expresion expr2) {
 		VARIABLE *var1 = varSearch(expr1.expr);
 		VARIABLE *var2 = varSearch(expr2.expr);
@@ -233,7 +235,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK
 %token <string> VAR CONST STRINGVAL 
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -257,6 +259,7 @@
 %type <expre> expr;
 %type <string> const_expr;
 %type <string> type;
+%type <expre> field;
 
 
 
@@ -299,6 +302,12 @@ type 		:	STRING				{$$="char *";}
 			| 	DOUBLE				{$$="double";}
 			;
 
+field 		:	NAME				{$$.expr=".name";$$.type=STRING_TYPE;}
+			| 	DESC					{$$.expr=".description";$$.type=STRING_TYPE;}
+			| 	PRICE				{$$.expr=".price";$$.type=DOUBLE_TYPE;}
+			| 	STOCK				{$$.expr=".qty";$$.type=INT_TYPE;}
+			;
+
 
 block		:	block statement		{
 										$$ = malloc((strlen($1)+strlen($2))*sizeof(*$$));
@@ -321,6 +330,21 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														yyerror("WRONG TYPE FOR VAR ");
 														YYABORT;
 								  					}													
+																					}
+
+			|VAR '.' field '<' '-' expr ';' '\n' 		{VARIABLE * v = varSearch($1);
+														    if(v == NULL ){
+																yyerror(" var doesnt exist");YYABORT;}
+															if(v->type != PRODUCT_TYPE){
+																yyerror(" var must be a product");YYABORT;
+															}
+															if($3.type != $6.type){
+																yyerror(" wrong asignation");YYABORT;
+															}
+															$$ = malloc((strlen($1)+strlen($3.expr)+strlen($6.expr)+5)*sizeof(*$$));
+															  sprintf($$,"%s%s = %s;\n",$1,$3.expr,$6.expr);
+															 
+								    																	
 																					}
 
 			|VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
@@ -451,12 +475,22 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 			|	expr '+' expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
 			|	VAR				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
-										yyerror("wrong var type or var doesnt exist");YYABORT;}
+										yyerror(" var doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
+								}
+			|	VAR'.'field				{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror(" var doesnt exist");YYABORT;}
+									if(v->type != PRODUCT_TYPE){
+										yyerror(" var must be a product");YYABORT;
+									}
+									$$.expr = malloc((strlen($1)+strlen($3.expr))*sizeof(*($$.expr)));
+								   sprintf($$.expr,"%s%s",$1,$3.expr);
+								   $$.type=$3.type;
 								}
 			|	CONST				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
-										yyerror("wrong var type or var doesnt exist");YYABORT;}
+										yyerror("const doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
 								}					
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}

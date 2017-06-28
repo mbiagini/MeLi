@@ -53,6 +53,11 @@ stringVal				[A-Za-z0-9]+
 "PRINT"					{ return PRINT; }
 "PRINTLN"				{ return PRINTLN; }
 
+"NAME"					{return NAME;}
+"DESC"					{return DESC;}
+"PRICE"					{return PRICE;}
+"STOCK"					{return STOCK;}
+
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
 {typeDouble}			{ return DOUBLE; }
@@ -79,7 +84,7 @@ stringVal				[A-Za-z0-9]+
 
 
 
-[-+()</=$*\n;{},]			return *yytext;
+[-+()</=$*\n;{},\.]			return *yytext;
 
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");
