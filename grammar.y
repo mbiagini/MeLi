@@ -252,7 +252,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD
+%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -394,7 +394,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|VAR '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
 																					 if(v == NULL || v->type != PRODUCT_TYPE){
 																					 		yyerror("wrong var type or var doesnt exist");YYABORT;}
-																					if($9.type != INT_TYPE || $11.type!= DOUBLE_TYPE){															
+																					if($9.type != DOUBLE_TYPE || $11.type!= INT_TYPE){															
 																							yyerror("wrong var initialization");YYABORT;
 																					}
 																					$$ = malloc((strlen($1)+strlen($5)+strlen($7)
@@ -466,6 +466,27 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														if( ans >= 0) {
 															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2)*sizeof(*$$));
 															sprintf($$, "%s %s = %s;\n", $1,$2,$5.expr);
+														}
+														else if(ans == -1){
+															yyerror("ALREADY DEFINED CONST/VAR");
+															YYABORT;
+														}
+														else if(ans == -2){
+															yyerror("MAX VARS SIZE REACHED(5000 VARS)");
+															YYABORT;
+														}
+							   						}
+							   						else{
+														yyerror("WRONG VAR DECLARATION");
+														YYABORT;
+													}	
+												}
+
+			|	PRODUCT VAR '<' '-' expr ';' '\n' 	{	if (validate("product",$5.type)) {
+														int ans = addVar(prepareVar("product",$2,$5.expr,0));
+														if( ans >= 0) {
+															$$ = malloc((8+strlen($2)+3+strlen($5.expr)+2)*sizeof(*$$));
+															sprintf($$, "product %s = %s;\n", $2,$5.expr);
 														}
 														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
@@ -564,6 +585,33 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								   sprintf($$.expr,"%s%s",$1,$3.expr);
 								   $$.type=$3.type;
 								}
+			|	VAR'.'GET'('expr')'			{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" var doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_ARRAY_TYPE){
+													yyerror(" var must be a product array");YYABORT;
+												}
+												if($5.type != INT_TYPE){
+													yyerror(" index must be an integer");YYABORT;
+												}
+												$$.expr = malloc((strlen($1)+strlen($5.expr)+8)*sizeof(*($$.expr)));
+											   sprintf($$.expr,"%s.array[%s]",$1,$5.expr);
+											   $$.type=PRODUCT_TYPE;
+											}
+
+			|	VAR'.'GET'('expr')'	'.'field	{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" var doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_ARRAY_TYPE){
+													yyerror(" var must be a product array");YYABORT;
+												}
+												if($5.type != INT_TYPE){
+													yyerror(" index must be an integer");YYABORT;
+												}
+												$$.expr = malloc((strlen($1)+strlen($5.expr)+8+strlen($8.expr))*sizeof(*($$.expr)));
+											   sprintf($$.expr,"%s.array[%s]%s",$1,$5.expr,$8.expr);
+											   $$.type=$8.type;
+											}
 			|	GOTSTOCK'('VAR')' 			{VARIABLE * v = varSearch($3);
 												 if(v ==NULL ){
 												 	yyerror("VAR ISNT DECLARATED");YYABORT;

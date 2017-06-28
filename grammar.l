@@ -44,6 +44,7 @@ stringVal				[A-Za-z0-9]+
 "GOTSTOCK"					{return GOTSTOCK;}
 "EQUALS"					{return EQUALS;}
 "ADD"					{return ADD;}
+"GET"					{return GET;}
 "IF"					{ return IF; }
 "THEN"					{ return THEN; }
 "ELSE"					{ return ELSE; }
