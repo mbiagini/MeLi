@@ -420,6 +420,11 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								    if(v == NULL ){
 										yyerror("wrong var type or var doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
+								}
+			|	CONST				{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror("wrong var type or var doesnt exist");YYABORT;}
+								   $$.expr = $1;$$.type=v->type;
 								}					
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
