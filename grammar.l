@@ -11,6 +11,7 @@
 space					[ \t]
 nullSpace				{space}+
 
+
 typeString				STRING
 typeInt					INT
 typeDouble				DOUBLE
@@ -26,6 +27,8 @@ wholeNumber				{digit}+|-{digit}+
 doubleNumber			{digit}+\.{digit}+
 stringVal				[A-Za-z0-9]+
 
+
+
 %%
 
 "<="					{ return LE; }
@@ -36,6 +39,8 @@ stringVal				[A-Za-z0-9]+
 "||"					{ return OR; }
 "++"					{ return INC; }
 "--"					{ return DEC; }
+
+"DISCOUNT"					{return DISCOUNT;}
 
 "IF"					{ return IF; }
 "THEN"					{ return THEN; }
@@ -69,6 +74,9 @@ stringVal				[A-Za-z0-9]+
 {constName}				{ yylval.string = malloc(strlen(yytext)+1);
 							strcpy(yylval.string, yytext);
 							return CONST; }
+
+
+
 
 
 [-+()</=$*\n;{},]			return *yytext;

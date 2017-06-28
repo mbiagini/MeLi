@@ -41,6 +41,16 @@ var_type validExpr(expresion e1,expresion e2) {
 	return INT_TYPE;
 }
 
+
+int intLength(int num){
+	int i =0;
+	while(num > 0){
+		num = num/10;
+		i++;
+	}
+	return i;
+}
+
 var_type validAddExpr(expresion e1, expresion e2) {
 	if (e1.type == PRODUCT_TYPE && e2.type != PRODUCT_TYPE)
 		return -1;
@@ -56,6 +66,7 @@ var_type validAddExpr(expresion e1, expresion e2) {
 	if (e1.type == DOUBLE_TYPE || e2.type == DOUBLE_TYPE)
 		return DOUBLE_TYPE;
 	return INT_TYPE;
+
 }
 
 char *substr(char *str, int start, int end) {

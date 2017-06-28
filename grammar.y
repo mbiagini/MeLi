@@ -233,9 +233,9 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT
-%token <string> VAR CONST STRINGVAL
-%token <intnum> NUMBER
+%token STRING INT DOUBLE PRODUCT DISCOUNT
+%token <string> VAR CONST STRINGVAL 
+%token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
 
 %token IF THEN ENDIF
@@ -430,11 +430,31 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 												}
 			;
 
-expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
+			|	VAR DISCOUNT NUMBER';''\n' 			{if($3 > 100 || $3 < 0){
+														yyerror("DISCOUNT RECEIVES A NUMBER BETWEEN 0 AND 100");YYABORT;
+													 }
+													 VARIABLE * v = varSearch($1);
+													 if(v ==NULL ){
+													 	yyerror("VAR ISNT DECLARATED");YYABORT;
+													  }
+														if(v->type != PRODUCT_TYPE){
+															yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
+														}
+														$$ = malloc((strlen($1)+intLength($3)+16)*sizeof(*$$));
+														sprintf($$,"%s.price*=%d/100.0;\n",$1,$3);
+													 }
+			;
+
+expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
 			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
 			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
 			|	expr '+' expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
 			|	VAR				{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror("wrong var type or var doesnt exist");YYABORT;}
+								   $$.expr = $1;$$.type=v->type;
+								}
+			|	CONST				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
 										yyerror("wrong var type or var doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
