@@ -682,6 +682,19 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 													sprintf($$.expr,"(%s.qty>0)",$3);
 													$$.type = INT_TYPE;
 												 }
+			|	GOTSTOCK'('VAR '.' GET '('expr')'')' 			{VARIABLE * v = varSearch($3);
+																if(v == NULL ){
+																	yyerror(" var doesnt exist");YYABORT;}
+																if(v->type != PRODUCT_ARRAY_TYPE){
+																	yyerror(" var must be a product array");YYABORT;
+																}
+																if($7.type != INT_TYPE){
+																	yyerror(" index must be an integer");YYABORT;
+																}
+																$$.expr = malloc((strlen($3)+strlen($7.expr)+16)*sizeof(*($$.expr)));
+																   sprintf($$.expr,"(%s.array[%s].qty>0)",$3,$7.expr);
+																   $$.type=INT_TYPE;
+																 }
 
 			|	VAR EQUALS VAR 			{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($3);
 												 if(v ==NULL || v2 ==NULL){
