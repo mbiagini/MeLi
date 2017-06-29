@@ -847,6 +847,7 @@ int main(void) {
     printf("#include <stdlib.h>\n");
     printf("#include <stdio.h>\n");
     printf("#include <string.h>\n");
+    printf("#include <math.h>\n");
     printf("#include \"include/utils.h\"\n");
     printf("#include \"include/types.h\"\n");
     printf("int main(void) { \n");
