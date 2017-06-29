@@ -15,6 +15,8 @@ typedef struct {
 	char * name;
 	int constant;
 	void * content;
+	int state;
+	int block;
 } VARIABLE;
 
 typedef struct {

@@ -11,15 +11,14 @@
 	int yylex(void);
 	void yyerror(char const *);
 	extern int yylineno;
-
-
+	extern int state;
+	extern int block;
 	VARIABLE  vars[MAX_VARS] = {0};
 
 	int addVar(VARIABLE var){
 		int i;
-
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL ; i++){
-			if(strcmp(vars[i].name, var.name) == 0){
+			if(strcmp(vars[i].name, var.name) == 0 && vars[i].state == state && vars[i].block == block){
 				return -1;
 			}
 		}
@@ -35,7 +34,7 @@
 		int i;
 		int found = 0;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
-			if(strcmp(vars[i].name, name) == 0){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
 				found = 1;
 			}
 		}
@@ -63,7 +62,7 @@
 	VARIABLE *varSearch(char *name) {
 		int i;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL; i++){
-			if(strcmp(vars[i].name, name) == 0){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
 				return &vars[i];
 			}
 		}
@@ -185,6 +184,8 @@
 		VARIABLE ans;
 		ans.constant = constant;
 		ans.name = malloc(strlen(name)+1);
+		ans.state = state;
+		ans.block = block;
 		strcpy(ans.name,name);
 		if(strcmp(type,"char *")==0){
 			ans.type = STRING_TYPE;	
@@ -855,7 +856,11 @@ const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1
 
 
 %%
-
+int state = 0;
+int block =0;
+int blocks = 0;
+int * lastOne;
+int closeds =0;
 void yyerror(char const *s) {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 }

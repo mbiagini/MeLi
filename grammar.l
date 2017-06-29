@@ -5,6 +5,12 @@
 	#include "y.tab.h"
 
 	void yyerror(char *);
+	extern int state;
+	extern int block;
+	extern int blocks;
+	extern int * lastOne;
+	extern int closeds;
+	
 
 
 %}
@@ -45,13 +51,13 @@ stringVal				[^\"]+
 "EQUALS"					{return EQUALS;}
 "ADD"					{return ADD;}
 "GET"					{return GET;}
-"IF"					{ return IF; }
+"IF"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;block = blocks;return IF; }
 "THEN"					{ return THEN; }
-"ELSE"					{ return ELSE; }
-"ENDIF"					{ return ENDIF; }
+"ELSE"					{ state++;blocks++;block = blocks;return ELSE; }
+"ENDIF"					{ closeds++;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDIF; }
 
-"WHILE"					{ return WHILE; }
-"ENDWHILE"				{ return ENDWHILE; }
+"WHILE"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;block = blocks; return WHILE; }
+"ENDWHILE"				{ closeds++;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDWHILE; }
 
 "PRINT"					{ return PRINT; }
 "PRINTLN"				{ return PRINTLN; }
