@@ -622,6 +622,24 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															sprintf($$,"scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$2);
 														}
 													 }
+			|	get VAR'.'field  ';''\n' 			{ VARIABLE * v = varSearch($2);
+													 if(v ==NULL ){
+													 	yyerror("VAR ISNT DECLARATED");YYABORT;
+													  }
+														if(v->type != PRODUCT_TYPE){
+															yyerror("var isnt a product");YYABORT;
+														}if ($4.type != $1.type){
+															yyerror("wrong var type");YYABORT;
+														}
+														if($1.type != STRING_TYPE){
+															$$ = malloc((strlen($1.expr)+strlen($2)+strlen($4.expr)+15)*sizeof(*$$));
+															sprintf($$,"scanf(\"%s\",&(%s%s));\n",$1.expr,$2,$4.expr);
+														}
+														else{//lee como maximo 255 caracteres
+																$$ = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159)*sizeof(*$$));
+															sprintf($$,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
+														}
+													 }
 
 			
 			;
