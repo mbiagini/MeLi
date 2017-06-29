@@ -33,19 +33,23 @@
 	int validateAsignation(char * name,expresion e){
 		int i;
 		int found = 0;
+		VARIABLE ans;
+		ans.name = NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
 			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
-				found = 1;
+				if(vars[i].state == state && vars[i].block == block){
+					found = 1;
+				}
+				ans = vars[i];
 			}
 		}
 
-		if(!found){
+		if(!found && ans.name == NULL){
 		   return -1;
 		}
-		if(vars[i-1].constant)
-			return -3;
 
-		switch(vars[i-1].type){
+
+		switch(ans.type){
 			case STRING_TYPE: return validate("char *",e.type) == 0 ? -2 : 1 ;
 					  break;
 			case INT_TYPE:return validate("int",e.type) == 0 ? -2 : 1;
@@ -61,12 +65,16 @@
 
 	VARIABLE *varSearch(char *name) {
 		int i;
+		VARIABLE * ans= NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL; i++){
 			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
-				return &vars[i];
+				if(vars[i].state == state && vars[i].block == block){
+					return &vars[i];
+				}
+				ans =  &vars[i];
 			}
 		}
-		return NULL;
+		return ans;
 	}
 
 	char *substraction(expresion e1, expresion e2) {
