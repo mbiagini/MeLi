@@ -59,6 +59,8 @@ stringVal				[A-Za-z0-9]+
 "GETDOUBLE TO"			{ return GETDOUBLE; }
 "GETSTRING TO"			{ return GETSTRING; }
 
+"SIZE"			{ return SIZE; }
+
 "NAME"					{return NAME;}
 "DESC"					{return DESC;}
 "PRICE"					{return PRICE;}
@@ -91,7 +93,7 @@ stringVal				[A-Za-z0-9]+
 
 
 
-[-+()</=$*\n>;{},\.\[\]]			return *yytext;
+[-+()</=$*\n>;{},\.\[\]!]			return *yytext;
 
 {nullSpace}				; /* skip whitespace */
 .						yyerror("invalid character");

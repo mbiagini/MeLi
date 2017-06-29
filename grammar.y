@@ -229,7 +229,8 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
+
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -661,6 +662,16 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 								   sprintf($$.expr,"%s%s",$1,$3.expr);
 								   $$.type=$3.type;
 								}
+			|	VAR'.'SIZE			{VARIABLE * v = varSearch($1);
+								    if(v == NULL ){
+										yyerror(" var doesnt exist");YYABORT;}
+									if(v->type != PRODUCT_ARRAY_TYPE){
+										yyerror(" var must be a product array");YYABORT;
+									}
+									$$.expr = malloc((strlen($1)+5)*sizeof(*($$.expr)));
+								   sprintf($$.expr,"%s.size",$1);
+								   $$.type=INT_TYPE;
+								}
 			|	VAR'.'GET'('expr')'			{VARIABLE * v = varSearch($1);
 											    if(v == NULL ){
 													yyerror(" var doesnt exist");YYABORT;}
@@ -770,8 +781,8 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 			| 	expr EQ expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	expr AND expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	expr OR expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	'!' expr 				{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
-			| '(' expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1)*sizeof(*($$.expr)));
+			| 	'!' expr 				{ if($2.type != INT_TYPE){yyerror("WRONG EXPR");YYABORT;}$$.expr=malloc((1+strlen($2.expr)+1)*sizeof(char));sprintf($$.expr , "!%s",$2.expr); $$.type = INT_TYPE;}
+			| '(' expr ')'				{ $$.type = $2.type;$$.expr = malloc((1+strlen($2.expr)+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
 
