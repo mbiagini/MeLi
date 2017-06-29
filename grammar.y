@@ -69,17 +69,43 @@
 		return NULL;
 	}
 
-	char *addition(expresion expr1, expresion expr2) {
-		VARIABLE *var1 = varSearch(expr1.expr);
-		VARIABLE *var2 = varSearch(expr2.expr);
+	char *substraction(expresion e1, expresion e2) {
+		VARIABLE *var1 = varSearch(e1.expr);
+		VARIABLE *var2 = varSearch(e2.expr);
+
+		char *strVar1, *strVar2;
+
+		if (var1 != NULL)
+			strVar1 = var1->name;
+		else
+			strVar1 = e1.expr;
+		if (var2 != NULL)
+			strVar2 = var2->name;
+		else
+			strVar2 = e2.expr;
+
+		if (e1.type == STRING_TYPE) {
+			char *resp = malloc((strlen("removeSubstring(")+strlen(strVar1)+1+strlen(strVar2)+1+1)*sizeof(*resp));
+			sprintf(resp,"removeSubstring(%s,%s)",strVar1,strVar2);
+			return resp;
+		}
+
+		char *resp = malloc(strlen(strVar1)+1+strlen(strVar2)+1);
+		resp = concat(concat(strVar1,"-"),strVar2);
+		return resp;
+	}
+
+	char *addition(expresion e1, expresion e2) {
+		VARIABLE *var1 = varSearch(e1.expr);
+		VARIABLE *var2 = varSearch(e2.expr);
 
 		char *strVar1, *strVar2, *str1, *str2;
 		var_type type1, type2;
 
 		if (var1 != NULL) { strVar1 = var1->name; type1 = var1->type; }
-		else { strVar1 = expr1.expr; type1 = expr1.type; }
+		else { strVar1 = e1.expr; type1 = e1.type; }
 		if (var2 != NULL) { strVar2 = var2->name; type2 = var2->type; }
-		else { strVar2 = expr2.expr; type2 = expr2.type; }
+		else { strVar2 = e2.expr; type2 = e2.type; }
 
 		if (type1 == STRING_TYPE || type2 == STRING_TYPE) {
 			switch(type1) {
@@ -114,7 +140,7 @@
 			sprintf(resp, "concat(%s,%s)", str1, str2);
 			return resp;
 		}
-		char *resp = malloc(strlen(strVar1)+strlen("+")+strlen(strVar2)+1);
+		char *resp = malloc(strlen(strVar1)+1+strlen(strVar2)+1);
 		resp = concat(concat(strVar1,"+"),strVar2);
 		return resp;
 	}
@@ -662,8 +688,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
 			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
-			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
-			|	expr '+' expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}
 			|	VAR				{VARIABLE * v = varSearch($1);
 								    if(v == NULL ){
 										yyerror(" var doesnt exist");YYABORT;}
@@ -800,8 +825,23 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 														}
 														$$.type = INT_TYPE;
 													}
-			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	expr '+' expr		{ 
+										$$.type = validAddExpr($1,$3);
+										if($$.type != -1)
+											$$.expr = addition($1,$3);
+										else {
+											yyerror("WRONG EXPR");
+											YYABORT; } 
+									}
+			|	expr '-' expr 		{ 	
+										$$.type = validSubsExpr($1,$3);
+										if($$.type != -1)
+											$$.expr = substraction($1,$3);
+										else {
+											yyerror("WRONG EXPR");
+											YYABORT; } 
+										}
+			|	expr '*' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
 			|	expr '<' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
 			|	expr '>' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
