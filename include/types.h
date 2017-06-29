@@ -34,4 +34,10 @@ typedef struct{
 	char * expr;
 }expresion;
 
+typedef struct{
+	char * string;
+	VARIABLE * variables;
+	int size;
+}statement;
+
 #endif

@@ -227,6 +227,7 @@
   char * string;
   float floatnum;
   expresion expre;
+  statement state;
 }
 
 %token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
@@ -250,12 +251,13 @@
 %left INC DEC '<' '>' LE GE NE EQ AND OR
 
 
-%type <string> block statement const;
+%type <string> block  const;
 %type <expre> expr;
 %type <expre> const_expr;
 %type <string> type;
 %type <expre> field;
 %type <expre> get;
+%type <state> statement
 
 
 
@@ -267,7 +269,7 @@ program		:	'$' '$' '\n' constList '$' '$' '\n' main
 			|	main
 			;
 
-main		:  	main statement						{ printf("%s", $2); }
+main		:  	main statement						{ printf("%s", $2.string); }
 			| 	/*NULL*/
 			;
 
@@ -338,8 +340,8 @@ get		:	GETINT						{$$.expr="%d";$$.type=INT_TYPE;}
 
 
 block		:	block statement		{
-										$$ = malloc((strlen($1)+strlen($2)+1)*sizeof(*$$));
-										sprintf($$, "%s%s", $1,$2);
+										$$ = malloc((strlen($1)+strlen($2.string)+1)*sizeof(*$$));
+										sprintf($$, "%s%s", $1,$2.string);
 									}
 			|						{	$$ = ""; }
 			;
@@ -347,8 +349,8 @@ block		:	block statement		{
 statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													int ans = validateAsignation($1,$4);
 								    				if (ans ==1) {
-														$$ = malloc((strlen($1)+3+strlen($4.expr)+2+1)*sizeof(*$$));
-														sprintf($$,"%s = %s;\n", $1, $4.expr);
+														$$.string = malloc((strlen($1)+3+strlen($4.expr)+2+1)*sizeof(*($$.string)));
+														sprintf($$.string,"%s = %s;\n", $1, $4.expr);
 								     				}
 								    				else if (ans == -1) {
 														yyerror("NOT DEFINED CONST/VAR ");
@@ -371,8 +373,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																			}if($9.type != PRODUCT_TYPE){
 																				yyerror(" wrong asignation");YYABORT;
 																			}
-																			$$ = malloc((strlen($1)+strlen($5.expr)+strlen($9.expr)+11+1)*sizeof(*$$));
-																			sprintf($$,"%s.array[%s]=%s;\n",$1,$5.expr,$9.expr);
+																			$$.string = malloc((strlen($1)+strlen($5.expr)+strlen($9.expr)+11+1)*sizeof(*($$.string)));
+																			sprintf($$.string,"%s.array[%s]=%s;\n",$1,$5.expr,$9.expr);
 																			}
 
 			|VAR '.' field '<' '-' expr ';' '\n' 		{VARIABLE * v = varSearch($1);
@@ -384,8 +386,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															if($3.type != $6.type){
 																yyerror(" wrong asignation");YYABORT;
 															}
-															$$ = malloc((strlen($1)+strlen($3.expr)+strlen($6.expr)+5+1)*sizeof(*$$));
-															  sprintf($$,"%s%s = %s;\n",$1,$3.expr,$6.expr);
+															$$.string = malloc((strlen($1)+strlen($3.expr)+strlen($6.expr)+5+1)*sizeof(*($$.string)));
+															  sprintf($$.string,"%s%s = %s;\n",$1,$3.expr,$6.expr);
 															 
 								    																	
 																					}
@@ -401,8 +403,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																							}if($8.type != $11.type){
 																								yyerror(" wrong asignation");YYABORT;
 																							}
-																							$$ = malloc((strlen($1)+strlen($5.expr)+strlen($8.expr)+strlen($11.expr)+11+1)*sizeof(*$$));
-																							sprintf($$,"%s.array[%s]%s=%s;\n",$1,$5.expr,$8.expr,$11.expr);
+																							$$.string = malloc((strlen($1)+strlen($5.expr)+strlen($8.expr)+strlen($11.expr)+11+1)*sizeof(*($$.string)));
+																							sprintf($$.string,"%s.array[%s]%s=%s;\n",$1,$5.expr,$8.expr,$11.expr);
 																					 }
 
 
@@ -412,9 +414,9 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																					if($9.type != DOUBLE_TYPE || $11.type!= INT_TYPE){															
 																							yyerror("wrong var initialization");YYABORT;
 																					}
-																					$$ = malloc((strlen($1)+strlen($5)+strlen($7)
-																						+strlen($9.expr)+strlen($11.expr)+35+1)*sizeof($$));
-															  						sprintf($$,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);	}
+																					$$.string = malloc((strlen($1)+strlen($5)+strlen($7)
+																						+strlen($9.expr)+strlen($11.expr)+35+1)*sizeof(*($$.string)));
+															  						sprintf($$.string,"%s.name=%s;\n%s.description=%s;\n%s.price=%s;\n%s.qty=%s;\n",$1,$5,$1,$7,$1,$9.expr,$1,$11.expr);	}
 			|VAR '.' GET '(' expr ')' '<' '-' '{'STRINGVAL ','STRINGVAL ','expr','expr'}' ';' '\n'  		{VARIABLE * v = varSearch($1);
 																											 if(v ==NULL ){
 																											 	yyerror("VAR ISNT DECLARATED");YYABORT;
@@ -426,13 +428,13 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																												}if($14.type != DOUBLE_TYPE || $16.type!= INT_TYPE){															
 																														yyerror("wrong var initialization");YYABORT;
 																												}
-																												$$ = malloc((4*strlen($1)+4*strlen($5.expr)+strlen($10)+strlen($12)+strlen($14.expr)+strlen($16.expr)+71)*sizeof($$));
-																						  						sprintf($$,"%s.array[%s].name=%s;\n%s.array[%s].description=%s;\n%s.array[%s].price=%s;\n%s.array[%s].qty=%s;\n",$1,$5.expr,$10,$1,$5.expr,$12,$1,$5.expr,$14.expr,$1,$5.expr,$16.expr);	}																				
+																												$$.string = malloc((4*strlen($1)+4*strlen($5.expr)+strlen($10)+strlen($12)+strlen($14.expr)+strlen($16.expr)+71)*sizeof(*($$.string)));
+																						  						sprintf($$.string,"%s.array[%s].name=%s;\n%s.array[%s].description=%s;\n%s.array[%s].price=%s;\n%s.array[%s].qty=%s;\n",$1,$5.expr,$10,$1,$5.expr,$12,$1,$5.expr,$14.expr,$1,$5.expr,$16.expr);	}																				
 			|	type VAR ';' '\n'				{
 													int ans = addVar(prepareVar($1,$2,NULL,0));
 													if (ans >= 0) {
-														$$ = malloc((strlen($1)+1+strlen($2)+2+1)*sizeof(*$$));
-														sprintf($$, "%s %s;\n", $1,$2);
+														$$.string = malloc((strlen($1)+1+strlen($2)+2+1)*sizeof(*($$.string)));
+														sprintf($$.string, "%s %s;\n", $1,$2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED VAR");
@@ -447,8 +449,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|	PRODUCT VAR ';' '\n'				{
 													int ans = addVar(prepareVar("product",$2,NULL,0));
 													if (ans >= 0) {
-														$$ = malloc((5*strlen($2)+57+1)*sizeof(*$$));
-														sprintf($$, "product %s;\n%s.name=\"\";\n%s.description=\"\";\n%s.price=0.0;\n%s.qty=0;\n", $2,$2,$2,$2,$2);
+														$$.string = malloc((5*strlen($2)+57+1)*sizeof(*($$.string)));
+														sprintf($$.string, "product %s;\n%s.name=\"\";\n%s.description=\"\";\n%s.price=0.0;\n%s.qty=0;\n", $2,$2,$2,$2,$2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED VAR");
@@ -463,8 +465,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|	PRODUCT VAR'['']' ';' '\n'				{
 													int ans = addVar(prepareVar("product[]",$2,NULL,0));
 													if (ans >= 0) {
-														$$ = malloc((3*strlen($2)+59+1)*sizeof(*$$));
-														sprintf($$, "product_array %s;\n%s.array = malloc(sizeof(product));\n%s.size=0;\n", $2,$2,$2);
+														$$.string = malloc((3*strlen($2)+59+1)*sizeof(*($$.string)));
+														sprintf($$.string, "product_array %s;\n%s.array = malloc(sizeof(product));\n%s.size=0;\n", $2,$2,$2);
 													}
 													else if(ans == -1){
 														yyerror("ALREADY DEFINED VAR");
@@ -485,15 +487,15 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													}if(v2->type != PRODUCT_TYPE){
 														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ");YYABORT;
 													}
-													$$ = malloc((6*strlen($1)+strlen($5)+77+1)*sizeof(*$$));
-													sprintf($$,"%s.array[%s.size]=%s;\n%s.size++;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1,$1);													
+													$$.string = malloc((6*strlen($1)+strlen($5)+77+1)*sizeof(*($$.string)));
+													sprintf($$.string,"%s.array[%s.size]=%s;\n%s.size++;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1,$1);													
 													
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {
-															$$ = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2+1)*sizeof(*$$));
-															sprintf($$, "%s %s = %s;\n", $1,$2,$5.expr);
+															$$.string = malloc((strlen($1)+1+strlen($2)+3+strlen($5.expr)+2+1)*sizeof(*($$.string)));
+															sprintf($$.string, "%s %s = %s;\n", $1,$2,$5.expr);
 														}
 														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
@@ -513,8 +515,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 			|	PRODUCT VAR '<' '-' expr ';' '\n' 	{	if (validate("product",$5.type)) {
 														int ans = addVar(prepareVar("product",$2,$5.expr,0));
 														if( ans >= 0) {
-															$$ = malloc((8+strlen($2)+3+strlen($5.expr)+2+1)*sizeof(*$$));
-															sprintf($$, "product %s = %s;\n", $2,$5.expr);
+															$$.string = malloc((8+strlen($2)+3+strlen($5.expr)+2+1)*sizeof(*($$.string)));
+															sprintf($$.string, "product %s = %s;\n", $2,$5.expr);
 														}
 														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
@@ -538,8 +540,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														}
 														int ans = addVar(prepareVar("product",$2,NULL,0));
 														if( ans >= 0) {
-															$$ = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+18+1)*sizeof($$));
-								  							sprintf($$,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
+															$$.string = malloc((strlen($2)+strlen($6)+strlen($8)+strlen($10.expr)+strlen($12.expr)+18+1)*sizeof(*($$.string)));
+								  							sprintf($$.string,"product %s = {%s,%s,%s,%s};\n",$2,$6,$8,$10.expr,$12.expr);
 														}
 														else if(ans == -1){
 															yyerror("ALREADY DEFINED CONST/VAR");
@@ -553,27 +555,27 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													}
 														
 
-			|	PRINT '(' expr ')' ';' '\n'		{	$$ = exprToPrint($3); }
-			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$ = exprToPrintln($3); }
+			|	PRINT '(' expr ')' ';' '\n'		{	$$.string = exprToPrint($3); }
+			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$.string = exprToPrintln($3); }
 			| 	IF expr '\n' 
 					block 
 				ENDIF '\n'						{ 
-													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+2+1)*sizeof(*$$));
-													sprintf($$, "if(%s) {\n%s}\n", $2.expr,$4);
+													$$.string = malloc((3+strlen($2.expr)+4+strlen($4)+2+1)*sizeof(*($$.string)));
+													sprintf($$.string, "if(%s) {\n%s}\n", $2.expr,$4);
 												}
 			|	IF expr '\n'
 					block 
 				ELSE '\n'
 					block
 				ENDIF '\n' 						{
-													$$ = malloc((3+strlen($2.expr)+4+strlen($4)+9+strlen($7)+2+1)*sizeof(*$$));
-													sprintf($$, "if(%s) {\n%s}\nelse {\n%s}\n", $2.expr,$4,$7);
+													$$.string = malloc((3+strlen($2.expr)+4+strlen($4)+9+strlen($7)+2+1)*sizeof(*($$.string)));
+													sprintf($$.string, "if(%s) {\n%s}\nelse {\n%s}\n", $2.expr,$4,$7);
 												}
 			|	WHILE expr '\n'
 					block
 				ENDWHILE '\n'					{
-													$$ = malloc((6+strlen($2.expr)+4+strlen($4)+2+1)*sizeof(*$$));
-													sprintf($$, "while(%s) {\n%s}\n", $2.expr,$4);
+													$$.string = malloc((6+strlen($2.expr)+4+strlen($4)+2+1)*sizeof(*($$.string)));
+													sprintf($$.string, "while(%s) {\n%s}\n", $2.expr,$4);
 												}
 			;
 
@@ -587,8 +589,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														if(v->type != PRODUCT_TYPE){
 															yyerror("VAR ISNT OF TYPE PRODUCT");YYABORT;
 														}
-														$$ = malloc((strlen($1)+intLength(100-$3)+16+1)*sizeof(*$$));
-														sprintf($$,"%s.price*=%d/100.0;\n",$1,(100-$3));
+														$$.string = malloc((strlen($1)+intLength(100-$3)+16+1)*sizeof(*($$.string)));
+														sprintf($$.string,"%s.price*=%d/100.0;\n",$1,(100-$3));
 													 }
 			|	VAR ROUND NUMBER ';' '\n'			{
 														if ($3 < 0) {
@@ -599,8 +601,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														if (v->type != DOUBLE_TYPE) {
 															yyerror("VAR ISN'T OF TYPE DOUBLE");YYABORT;
 														}
-														$$ = malloc((strlen($1)+strlen(" = myRound(")+strlen($1)+1+intLength($3)+3)*sizeof(*$$));
-														sprintf($$, "%s = myRound(%s,%d);\n", $1, $1, $3);
+														$$.string = malloc((strlen($1)+strlen(" = myRound(")+strlen($1)+1+intLength($3)+3+1)*sizeof(*($$.string)));
+														sprintf($$.string, "%s = myRound(%s,%d);\n", $1, $1, $3);
 													}
 			|	VAR '.' GET '(' expr ')' DISCOUNT NUMBER';''\n' 			{if($8 > 100 || $8 < 0){
 														yyerror("DISCOUNT RECEIVES A NUMBER BETWEEN 0 AND 100");YYABORT;
@@ -614,8 +616,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														}if($5.type != INT_TYPE){
 															yyerror(" index must be an integer");YYABORT;
 														}
-														$$ = malloc((strlen($1)+intLength(100-$8)+24+strlen($5.expr)+1)*sizeof(*$$));
-														sprintf($$,"%s.array[%s].price*=%d/100.0;\n",$1,$5.expr,(100-$8));
+														$$.string = malloc((strlen($1)+intLength(100-$8)+24+strlen($5.expr)+1)*sizeof(*($$.string)));
+														sprintf($$.string,"%s.array[%s].price*=%d/100.0;\n",$1,$5.expr,(100-$8));
 													 }
 			|	get VAR  ';''\n' 			{ VARIABLE * v = varSearch($2);
 													 if(v ==NULL ){
@@ -625,12 +627,12 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															yyerror("wrong var type");YYABORT;
 														}
 														if($1.type != STRING_TYPE){
-															$$ = malloc((strlen($1.expr)+strlen($2)+13+1)*sizeof(*$$));
-															sprintf($$,"scanf(\"%s\",&%s);\n",$1.expr,$2);
+															$$.string = malloc((strlen($1.expr)+strlen($2)+13+1)*sizeof(*($$.string)));
+															sprintf($$.string,"scanf(\"%s\",&%s);\n",$1.expr,$2);
 														}
 														else{//lee como maximo 255 caracteres
-																$$ = malloc((strlen($1.expr)+2*strlen($2)+159+1)*sizeof(*$$));
-															sprintf($$,"scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$2);
+																$$.string = malloc((strlen($1.expr)+2*strlen($2)+159+1)*sizeof(*($$.string)));
+															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$2);
 														}
 													 }
 			|	get VAR'.'field  ';''\n' 			{ VARIABLE * v = varSearch($2);
@@ -643,12 +645,12 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															yyerror("wrong var type");YYABORT;
 														}
 														if($1.type != STRING_TYPE){
-															$$ = malloc((strlen($1.expr)+strlen($2)+strlen($4.expr)+15+1)*sizeof(*$$));
-															sprintf($$,"scanf(\"%s\",&(%s%s));\n",$1.expr,$2,$4.expr);
+															$$.string = malloc((strlen($1.expr)+strlen($2)+strlen($4.expr)+15+1)*sizeof(*($$.string)));
+															sprintf($$.string,"scanf(\"%s\",&(%s%s));\n",$1.expr,$2,$4.expr);
 														}
 														else{//lee como maximo 255 caracteres
-																$$ = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159+1)*sizeof(*$$));
-															sprintf($$,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
+																$$.string = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159+1)*sizeof(*($$.string)));
+															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
 														}
 													 }
 
