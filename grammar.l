@@ -25,7 +25,7 @@ constName				[A-Z]+
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
 doubleNumber			{digit}+\.{digit}+
-stringVal				[A-Za-z0-9]+
+stringVal				[^\"]+
 
 
 
@@ -58,6 +58,7 @@ stringVal				[A-Za-z0-9]+
 "GETINT TO"				{ return GETINT; }
 "GETDOUBLE TO"			{ return GETDOUBLE; }
 "GETSTRING TO"			{ return GETSTRING; }
+"IN"			{ return IN; }
 
 "SIZE"			{ return SIZE; }
 

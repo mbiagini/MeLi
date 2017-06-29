@@ -16,6 +16,7 @@ var_type validAddExpr(expresion e1, expresion e2);
 int  validate(char * type, var_type expr);
 int countCharInString(char * str, char c);
 double myRound(double num, unsigned int digits);
+int prodInArray(product,product_array);
 
 #endif
 

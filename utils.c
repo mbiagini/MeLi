@@ -98,3 +98,13 @@ double myRound(double num, unsigned int digits) {
     double factor = pow(10, digits);
     return round(num*factor)/factor;
 }
+
+int prodInArray(product prod,product_array prod_arr){
+	int i = 0 ;
+	for(;i < prod_arr.size;i++){
+		if(strcmp(prod.name,prod_arr.array[i].name)==0 && strcmp(prod.description,prod_arr.array[i].description)==0 && prod.price == prod_arr.array[i].price && prod.qty == prod_arr.array[i].qty)
+			return 1;
+	}
+	return 0;
+
+}

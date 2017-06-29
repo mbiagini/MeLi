@@ -232,7 +232,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -767,6 +767,20 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 											   sprintf($$.expr,"%s%s",$1,$3.expr);
 											   $$.type=$3.type;
 											}	
+			|	VAR IN VAR 				{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($3);
+												 if(v ==NULL || v2 ==NULL){
+												 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+												  }
+													if(v->type != PRODUCT_TYPE ){
+														yyerror("FIRST VAR ISNT OF TYPE PRODUCT");YYABORT;
+													}
+													if(v2-> type != PRODUCT_ARRAY_TYPE){
+														yyerror("FIRST VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+													}
+													$$.expr = malloc((strlen($3)+strlen($1)+14)*sizeof(*($$.expr)));
+													sprintf($$.expr,"prodInArray(%s,%s)",$1,$3);
+													$$.type = INT_TYPE;
+												 }
 			|	VAR BETWEEN expr '<' '>' expr		{
 														VARIABLE *v = varSearch($1);
 														if (v == NULL) {
