@@ -1,4 +1,5 @@
 #include "include/utils.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -91,4 +92,9 @@ char *doubleToChar(double d) {
 	char *resp = malloc(20);
 	sprintf(resp,"%f",d);
 	return resp;
+}
+
+double myRound(double num, unsigned int digits) {
+    double factor = pow(10, digits);
+    return round(num*factor)/factor;
 }

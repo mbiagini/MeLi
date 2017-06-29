@@ -1,6 +1,6 @@
 all:
 	flex grammar.l
 	yacc -d grammar.y
-	gcc -o grammar lex.yy.c y.tab.c utils.c -lfl -ly
+	gcc -o grammar lex.yy.c y.tab.c utils.c -lm -lfl -ly
 clean:
 			rm lex.yy.c y.tab.c y.tab.h
