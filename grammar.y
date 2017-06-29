@@ -76,27 +76,6 @@
 		VARIABLE *var1 = varSearch(expr1.expr);
 		VARIABLE *var2 = varSearch(expr2.expr);
 
-		if (var1 == NULL && var2 == NULL) {
-			if (expr1.type == STRING_TYPE) {
-				if (expr2.type == STRING_TYPE)
-					return concat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr+1);
-				if (expr2.type == INT_TYPE || expr2.type == DOUBLE_TYPE)
-					return concat(concat((char*)substr(expr1.expr,0,strlen(expr1.expr)-1), expr2.expr), "\"");
-			}
-			if (expr2.type == STRING_TYPE) {
-				return concat(concat("\"",expr1.expr), expr2.expr+1);
-			}
-			if (expr1.type != PRODUCT_TYPE && expr2.type != PRODUCT_TYPE)
-				return concat(concat(expr1.expr, "+"), expr2.expr);
-			if (expr1.type == PRODUCT_TYPE && expr2.type == PRODUCT_TYPE) {
-				return NULL;	/* TODO: implement suma de productos. */
-			}
-		}
-
-		if (var1 != NULL && var2 != NULL && var1->type == PRODUCT_TYPE && var2->type == PRODUCT_TYPE) {
-			return NULL;	/* TODO: implement suma de productos. */
-		}
-
 		char *strVar1, *strVar2, *str1, *str2;
 		var_type type1, type2;
 
