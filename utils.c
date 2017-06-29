@@ -31,6 +31,15 @@ int countCharInString(char * str, char c){
 	return count;
 }
 
+int intLength(int num){
+	int i =0;
+	while(num > 0){
+		num = num/10;
+		i++;
+	}
+	return i;
+}
+
 var_type validExpr(expresion e1,expresion e2) {
 	if(e1.type == STRING_TYPE && e2.type != STRING_TYPE)
 		return -1;
@@ -42,32 +51,29 @@ var_type validExpr(expresion e1,expresion e2) {
 	return INT_TYPE;
 }
 
-
-int intLength(int num){
-	int i =0;
-	while(num > 0){
-		num = num/10;
-		i++;
-	}
-	return i;
-}
-
 var_type validAddExpr(expresion e1, expresion e2) {
-	if (e1.type == PRODUCT_TYPE && e2.type != PRODUCT_TYPE)
-		return -1;
-	if (e2.type == PRODUCT_TYPE && e1.type != PRODUCT_TYPE)
+	if (e1.type == PRODUCT_TYPE || e2.type == PRODUCT_TYPE)
 		return -1;
 	if (e1.type == STRING_TYPE || e2.type == STRING_TYPE)
 		return STRING_TYPE;
-	if (e1.type == e2.type) {
-		if (e1.type == PRODUCT_TYPE)
-			return PRODUCT_TYPE;		/* TODO: should return *PRODUCT_TYPE */
+	if (e1.type == e2.type)
 		return e1.type;
-	}
 	if (e1.type == DOUBLE_TYPE || e2.type == DOUBLE_TYPE)
 		return DOUBLE_TYPE;
 	return INT_TYPE;
 
+}
+
+var_type validSubsExpr(expresion e1, expresion e2) {
+	if (e1.type == PRODUCT_TYPE || e2.type == PRODUCT_TYPE)
+		return -1;
+	if (e1.type == e2.type)
+		return e1.type;
+	if (e1.type == INT_TYPE && e2.type == DOUBLE_TYPE)
+		return DOUBLE_TYPE;
+	if (e2.type == INT_TYPE && e1.type == DOUBLE_TYPE)
+		return DOUBLE_TYPE;
+	return -1;
 }
 
 char *substr(char *str, int start, int end) {
@@ -106,5 +112,19 @@ int prodInArray(product prod,product_array prod_arr){
 			return 1;
 	}
 	return 0;
+}
 
+char *removeSubstring(char *str,const char *sub) {
+	char *resp = malloc(strlen(str)+1);
+	char *sub_location;
+	if (strlen(sub) > strlen(str))
+		return str;
+	strcpy(resp, str);
+	sub_location = strstr(resp, sub);
+	if (sub_location != NULL) {
+		strcpy(sub_location, sub_location + strlen(sub));
+		char *next = removeSubstring(resp,sub);
+		return next;
+	}
+	return resp;
 }
