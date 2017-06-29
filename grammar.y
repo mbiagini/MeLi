@@ -70,8 +70,6 @@
 		return NULL;
 	}
 
-
-
 	char *addition(expresion expr1, expresion expr2) {
 		VARIABLE *var1 = varSearch(expr1.expr);
 		VARIABLE *var2 = varSearch(expr2.expr);
@@ -231,7 +229,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
 %token <floatnum> DOUBLENUMBER
@@ -741,7 +739,26 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 												$$.expr = malloc((strlen($1)+strlen($3.expr))*sizeof(*($$.expr)));
 											   sprintf($$.expr,"%s%s",$1,$3.expr);
 											   $$.type=$3.type;
-											}				
+											}	
+			|	VAR BETWEEN expr '<' '>' expr		{
+														VARIABLE *v = varSearch($1);
+														if (v == NULL) {
+															yyerror("VAR ISN'T DECLARATED");YYABORT; }
+														if (v->type == PRODUCT_TYPE) {
+															yyerror("BETWEEN CONNOT BE APPLIED TO A PRODUCT");YYABORT; }
+														if ($3.type != v->type || $6.type != v->type) {
+															yyerror("AT LEAST ONE EXPRESSION IS OF INCORRECT TYPE");YYABORT; }
+														if (v->type == STRING_TYPE) {
+															$$.expr = malloc((strlen("(strcmp(")+strlen($3.expr)+1+strlen($1)+strlen(")<=0 && strcmp(")+strlen($1)+1+strlen($6.expr)+strlen(")<=0)"))*sizeof(*($$.expr)));
+															sprintf($$.expr,"(strcmp(%s,%s)<=0 && strcmp(%s,%s)<=0)",$3.expr,$1,$1,$6.expr);
+														}
+														else if (v->type == INT_TYPE || v->type == DOUBLE_TYPE) {
+															$$.expr = malloc((1+strlen($3.expr)+strlen(" <= ")+strlen($1)+strlen(" && ")+strlen($1)+strlen(" <= ")+strlen($6.expr)+1)*sizeof(*($$.expr)));
+															sprintf($$.expr,"(%s <= %s && %s <= %s)",$3.expr,$1,$1,$6.expr);
+														}
+														$$.type = INT_TYPE;
+													}
+
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 

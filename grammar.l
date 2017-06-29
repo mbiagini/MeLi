@@ -63,6 +63,7 @@ stringVal				[A-Za-z0-9]+
 "DESC"					{return DESC;}
 "PRICE"					{return PRICE;}
 "STOCK"					{return STOCK;}
+"BETWEEN"				{return BETWEEN;}
 
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
