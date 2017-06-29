@@ -9,7 +9,7 @@
 	#define MAX_VARS 5000
 
 	int yylex(void);
-	void yyerror(char *);
+	void yyerror(char const *);
 	extern int yylineno;
 
 
@@ -229,6 +229,8 @@
   expresion expre;
   statement state;
 }
+
+%error-verbose
 
 %token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
 
@@ -840,7 +842,7 @@ const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1
 
 %%
 
-void yyerror(char *s) {
+void yyerror(char const *s) {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 }
 
