@@ -229,7 +229,7 @@
   expresion expre;
 }
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -590,6 +590,18 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														$$ = malloc((strlen($1)+intLength(100-$3)+16)*sizeof(*$$));
 														sprintf($$,"%s.price*=%d/100.0;\n",$1,(100-$3));
 													 }
+			|	VAR ROUND NUMBER ';' '\n'			{
+														if ($3 < 0) {
+															yyerror("ROUND RECEIVES A POSITIVE NUMBER");YYABORT; }
+														VARIABLE *v = varSearch($1);
+														if (v == NULL) {
+															yyerror("VAR ISN'T DECLARATED");YYABORT; }
+														if (v->type != DOUBLE_TYPE) {
+															yyerror("VAR ISN'T OF TYPE DOUBLE");YYABORT;
+														}
+														$$ = malloc((strlen($1)+strlen(" = myRound(")+strlen($1)+1+intLength($3)+3)*sizeof(*$$));
+														sprintf($$, "%s = myRound(%s,%d);\n", $1, $1, $3);
+													}
 			|	VAR '.' GET '(' expr ')' DISCOUNT NUMBER';''\n' 			{if($8 > 100 || $8 < 0){
 														yyerror("DISCOUNT RECEIVES A NUMBER BETWEEN 0 AND 100");YYABORT;
 													 }
@@ -769,7 +781,6 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc(intLength($1)*sizeof(*
 														}
 														$$.type = INT_TYPE;
 													}
-
 			|	expr '-' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '*' expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
