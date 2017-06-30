@@ -183,3 +183,20 @@ product getMaxProd(product_array p_array) {
 	resp.qty = p_array.array[max_idx].qty;
 	return resp;
 }
+
+
+
+
+void removeFromArray(product_array * array,int index){
+	if(array->size <= index || index < 0)
+		return;
+	while(index < array->size-1){
+		array->array[index]=array->array[++index];
+	}
+	array->array[array->size-1].name="";
+	array->array[array->size-1].description="";
+	array->array[array->size-1].price=0.0;
+	array->array[array->size-1].qty=0;
+	array->size--;
+	array->array=realloc(array->array,(array->size+1)*sizeof(product));
+}

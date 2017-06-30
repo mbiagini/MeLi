@@ -24,6 +24,8 @@ int prodInArray(product,product_array);
 product getMinProd(product_array array);
 product getMaxProd(product_array p_array);
 
+void removeFromArray(product_array *, int);
+
 #endif
 
 

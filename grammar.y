@@ -281,7 +281,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX REMOVE
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -543,6 +543,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													sprintf($$.string,"%s.array[%s.size]=%s;\n%s.size++;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1,$1);													
 													
 												}
+
+			|	VAR'.'REMOVE'('expr')'';''\n'			{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" var doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_ARRAY_TYPE){
+													yyerror(" var must be a product array");YYABORT;
+												}
+												if($5.type != INT_TYPE){
+													yyerror(" index must be an integer");YYABORT;
+												}
+												$$.string = malloc((strlen($1)+strlen($5.expr)+22)*sizeof(*($$.string)));
+											   sprintf($$.string,"removeFromArray(&%s,%s);\n",$1,$5.expr);
+											   
+											}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {

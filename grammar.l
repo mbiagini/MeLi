@@ -75,6 +75,7 @@ stringVal				[^\"]+
 "STOCK"					{return STOCK;}
 "BETWEEN"				{return BETWEEN;}
 "ROUND"					{return ROUND;}
+"REMOVE"				{return REMOVE;}
 
 {typeString}			{ return STRING; }
 {typeInt}				{ return INT; }
