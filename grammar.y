@@ -36,8 +36,8 @@
 		VARIABLE ans;
 		ans.name = NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
-			if(strcmp(vars[i].name, name) == 0 && vars[i].state <= state && vars[i].block == block)  {
-				if(vars[i].state == state ){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  ))  {
+				if(vars[i].state == state && vars[i].block == block){
 					found = 1;
 				}
 				ans = vars[i];
@@ -67,8 +67,8 @@
 		int i;
 		VARIABLE * ans= NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL; i++){
-			if(strcmp(vars[i].name, name) == 0 && vars[i].state <= state && vars[i].block == block){
-				if(vars[i].state == state ){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
+				if(vars[i].state == state && vars[i].block == block){
 					return &vars[i];
 				}
 				ans =  &vars[i];
@@ -1097,7 +1097,7 @@ int block =0;
 int blocks = 0;
 int * lastOne;
 int closeds =0;
-int wasOpened =1;
+
 void yyerror(char const *s) {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 }
