@@ -1120,7 +1120,7 @@ const_expr	:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)
 													$$.type = INT_TYPE;
 													$$.expr = strcat(strcat($1.expr," || "), $3.expr);
 												}
-			| 	'!' const_expr 					{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
+			| 	'!' const_expr 					{ if($2.type != INT_TYPE){yyerror("WRONG EXPR");YYABORT;}$$.expr=concat("!",$2.expr); $$.type = INT_TYPE;}
 			| 	'(' const_expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
