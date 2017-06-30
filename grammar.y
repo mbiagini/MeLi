@@ -267,7 +267,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -773,10 +773,29 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 																   sprintf($$.expr,"(%s.array[%s].qty>0)",$3,$7.expr);
 																   $$.type=INT_TYPE;
 																 }
-
+			|	MIN VAR 				{
+											VARIABLE *v = varSearch($2);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != PRODUCT_ARRAY_TYPE) {
+												yyerror("VAR MUST BE A PRODUCT ARRAY");YYABORT; }
+											$$.type = PRODUCT_TYPE;
+											$$.expr = malloc((strlen("getMinProd()")+strlen($2)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "getMinProd(%s)", $2);
+										}
+			|	MAX VAR 				{
+											VARIABLE *v = varSearch($2);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != PRODUCT_ARRAY_TYPE) {
+												yyerror("VAR MUST BE A PRODUCT ARRAY");YYABORT; }
+											$$.type = PRODUCT_TYPE;
+											$$.expr = malloc((strlen("getMaxProd()")+strlen($2)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "getMaxProd(%s)", $2);
+										}
 			|	VAR EQUALS VAR 			{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($3);
 												 if(v ==NULL || v2 ==NULL){
-												 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+												 	yyerror("AT LEAST ONE VAR ISNT DECLARATED");YYABORT;
 												  }
 													if(v->type != PRODUCT_TYPE || v2->type != PRODUCT_TYPE){
 														yyerror("AT LEAST ONE VAR ISNT OF TYPE PRODUCT");YYABORT;

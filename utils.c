@@ -128,3 +128,47 @@ char *removeSubstring(char *str,const char *sub) {
 	}
 	return resp;
 }
+
+product getMinProd(product_array p_array) {
+	product resp;
+	if (p_array.size == 0) {
+		resp.name = "null"; resp.description = "null"; resp.price = 0.0; resp.qty = 0;
+		return resp;
+	}
+	int i;
+	int min_idx = 0;
+	double min_price = p_array.array[0].price;
+	for (i = 0; i < p_array.size; i++) {
+		if (p_array.array[i].price < min_price) {
+			min_idx = i;
+			min_price = p_array.array[i].price;
+		}
+	}
+	resp.name = p_array.array[min_idx].name;
+	resp.description = p_array.array[min_idx].description;
+	resp.price = p_array.array[min_idx].price;
+	resp.qty = p_array.array[min_idx].qty;
+	return resp;
+}
+
+product getMaxProd(product_array p_array) {
+	product resp;
+	if (p_array.size == 0) {
+		resp.name = "null"; resp.description = "null"; resp.price = 0.0; resp.qty = 0;
+		return resp;
+	}
+	int i;
+	int max_idx = 0;
+	double max_price = p_array.array[0].price;
+	for (i = 0; i < p_array.size; i++) {
+		if (p_array.array[i].price > max_price) {
+			max_idx = i;
+			max_price = p_array.array[i].price;
+		}
+	}
+	resp.name = p_array.array[max_idx].name;
+	resp.description = p_array.array[max_idx].description;
+	resp.price = p_array.array[max_idx].price;
+	resp.qty = p_array.array[max_idx].qty;
+	return resp;
+}

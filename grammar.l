@@ -65,6 +65,8 @@ stringVal				[^\"]+
 "GETDOUBLE TO"			{ return GETDOUBLE; }
 "GETSTRING TO"			{ return GETSTRING; }
 "IN"			{ return IN; }
+"MAX"			{ return MAX; }
+"MIN"			{ return MIN; }
 
 "SIZE"			{ return SIZE; }
 

@@ -20,6 +20,9 @@ int countCharInString(char * str, char c);
 double myRound(double num, unsigned int digits);
 int prodInArray(product,product_array);
 
+product getMinProd(product_array array);
+product getMaxProd(product_array p_array);
+
 #endif
 
 
