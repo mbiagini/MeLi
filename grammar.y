@@ -791,6 +791,46 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 											$$.expr = malloc((strlen("getMaxProd()")+strlen($2)+1)*sizeof(*($$.expr)));
 											sprintf($$.expr, "getMaxProd(%s)", $2);
 										}
+			| 	DEC VAR 				{
+											VARIABLE *v = varSearch($2);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != INT_TYPE && v->type != DOUBLE_TYPE) {
+												yyerror("VAR MUST BE INT OR DOUBLE");YYABORT; }
+											$$.type = v->type;
+											$$.expr = malloc((strlen("(--)")+strlen($2)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "(--%s)", $2);
+										}
+			| 	VAR DEC 				{
+											VARIABLE *v = varSearch($1);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != INT_TYPE && v->type != DOUBLE_TYPE) {
+												yyerror("VAR MUST BE INT OR DOUBLE");YYABORT; }
+											$$.type = v->type;
+											$$.expr = malloc((strlen("(--)")+strlen($1)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "(%s--)", $1);
+										}
+			| 	INC VAR 				{
+											VARIABLE *v = varSearch($2);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != INT_TYPE && v->type != DOUBLE_TYPE) {
+												yyerror("VAR MUST BE INT OR DOUBLE");YYABORT; }
+											$$.type = v->type;
+											$$.expr = malloc((strlen("(++)")+strlen($2)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "(++%s)", $2);
+										}
+			| 	VAR INC 				{
+											VARIABLE *v = varSearch($1);
+											if(v == NULL) {
+												yyerror("VAR ISN'T DECLARATED");YYABORT; }
+											if(v->type != INT_TYPE && v->type != DOUBLE_TYPE) {
+												yyerror("VAR MUST BE INT OR DOUBLE");YYABORT; }
+											$$.type = v->type;
+											$$.expr = malloc((strlen("(++)")+strlen($1)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "(%s++)", $1);
+										}
 			|	VAR EQUALS VAR 			{VARIABLE * v = varSearch($1);VARIABLE * v2 = varSearch($3);
 												 if(v ==NULL || v2 ==NULL){
 												 	yyerror("AT LEAST ONE VAR ISNT DECLARATED");YYABORT;
