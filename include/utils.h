@@ -24,6 +24,10 @@ int prodInArray(product,product_array);
 product getMinProd(product_array array);
 product getMaxProd(product_array p_array);
 
+product_array *searchStr(char *str, product_array array);
+
+void addProd(product_array *array, product p);
+
 #endif
 
 

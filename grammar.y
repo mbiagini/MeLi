@@ -281,7 +281,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE SEARCH IN INSIDE MIN MAX
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -428,8 +428,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																			$$.string = malloc((strlen($1)+strlen($5.expr)+strlen($9.expr)+11+1)*sizeof(*($$.string)));
 																			sprintf($$.string,"%s.array[%s]=%s;\n",$1,$5.expr,$9.expr);
 																			}
+			| 	VAR '<' '-' SEARCH expr INSIDE VAR ';' '\n'				{ 
+																			VARIABLE *v1 = varSearch($1);
+																			VARIABLE *v2 = varSearch($7);
+																			if (v1 == NULL || v2 == NULL) {
+																				yyerror("AT LEAST ONE VAR ISN'T DECLARETED");YYABORT; }
+																			if (v1->type != PRODUCT_ARRAY_TYPE || v2->type != PRODUCT_ARRAY_TYPE) {
+																				yyerror("FIRST AND LAST VARIABLES MUST BE PRODUCT ARRAYS");YYABORT; }
+																			if ($5.type != STRING_TYPE) {
+																				yyerror("SEARCH REQUIRES A STRING");YYABORT; }
+																			$$.string = malloc((strlen(" = *searchStr(,);\\n")+strlen($1)+strlen($5.expr)+strlen($7)+1)*sizeof(*($$.string)));
+																			sprintf($$.string, "%s = *searchStr(%s,%s);\n", $1, $5.expr, $7);
+																		}
 
-			|VAR '.' field '<' '-' expr ';' '\n' 		{VARIABLE * v = varSearch($1);
+			| 	VAR '.' field '<' '-' expr ';' '\n' 		{VARIABLE * v = varSearch($1);
 														    if(v == NULL ){
 																yyerror(" var doesnt exist");YYABORT;}
 															if(v->type != PRODUCT_TYPE){
@@ -539,9 +551,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													}if(v2->type != PRODUCT_TYPE){
 														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ");YYABORT;
 													}
-													$$.string = malloc((6*strlen($1)+strlen($5)+77+1)*sizeof(*($$.string)));
-													sprintf($$.string,"%s.array[%s.size]=%s;\n%s.size++;\n%s.array = realloc(%s.array,(%s.size+1)*sizeof(product));\n",$1,$1,$5,$1,$1,$1,$1);													
-													
+													$$.string = malloc((strlen("addProd(&,);\\n")+strlen($1)+strlen($5)+1)*sizeof(*($$.string)));
+													sprintf($$.string, "addProd(&%s,%s);\n", $1, $5);													
 												}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));

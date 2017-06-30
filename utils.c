@@ -183,3 +183,25 @@ product getMaxProd(product_array p_array) {
 	resp.qty = p_array.array[max_idx].qty;
 	return resp;
 }
+
+void addProd(product_array *array, product p) {
+	array->array[array->size] = p;
+	array->size++;
+	array->array = realloc(array->array,(array->size+1)*sizeof(p));
+}
+
+product_array *searchStr(char *str, product_array array) {
+	product_array *resp;
+	resp = malloc(sizeof(product_array));
+	resp->array = malloc(sizeof(product));
+	resp->size = 0;
+	char *aux;
+
+	int i;
+	for (i = 0; i < array.size; i++) {
+		aux = strstr(array.array[i].name, str);
+		if (aux != NULL)
+			addProd(resp, array.array[i]);
+	}
+	return resp;
+}
