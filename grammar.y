@@ -706,8 +706,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															sprintf($$.string,"scanf(\"%s\",&%s);\n",$1.expr,$2);
 														}
 														else{//lee como maximo 255 caracteres
-																$$.string = malloc((strlen($1.expr)+2*strlen($2)+159+1)*sizeof(*($$.string)));
-															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$2);
+																$$.string = malloc((strlen($1.expr)+2*strlen($2)+159+1+52)*sizeof(*($$.string)));
+															sprintf($$.string,"for(int i =0;i<256;i++){AUX_STRING_READER1[i]=0;}scanf(\"%s\",AUX_STRING_READER1);\n%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s,AUX_STRING_READER1,(strlen(AUX_STRING_READER1)+1)*sizeof(char));\n",$1.expr,$2,$2);
 														}
 													 }
 			|	get VAR'.'field  ';''\n' 			{ VARIABLE * v = varSearch($2);
@@ -724,8 +724,8 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															sprintf($$.string,"scanf(\"%s\",&(%s%s));\n",$1.expr,$2,$4.expr);
 														}
 														else{//lee como maximo 255 caracteres
-																$$.string = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159+1)*sizeof(*($$.string)));
-															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
+																$$.string = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159+1+52)*sizeof(*($$.string)));
+															sprintf($$.string,"for(int i =0;i<256;i++){AUX_STRING_READER1[i]=0;}scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,(strlen(AUX_STRING_READER1)+1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
 														}
 													 }
 			|	SUBSTRACT VAR FROM VAR ';''\n'		{ VARIABLE * v = varSearch($2);VARIABLE * v2 = varSearch($4);
@@ -742,7 +742,7 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															sprintf($$.string,"removeProdFromArray(&%s,%s);\n",$4,$2);
 													 }
 
-			
+			| '\n' {$$.string="\n";}
 			;
 
 expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }

@@ -30,6 +30,8 @@ void addProd(product_array *array, product p);
 
 void removeFromArray(product_array *, int);
 void removeProdFromArray(product_array *, product);
+
+void fillWithCeros(char * string);
 #endif
 
 

@@ -88,13 +88,13 @@ var_type validSubsExpr(expresion e1, expresion e2) {
 }
 
 char *substr(char *str, int start, int end) {
-	char *resp = malloc(strlen(str));
+	char *resp = malloc(strlen(str)+1);
 	memcpy(resp, str+start, end - start);
 	return resp;
 }
 
 char *concat(char*str1,char*str2) {
-	char *resp = malloc(strlen(str1)+strlen(str2));
+	char *resp = malloc(strlen(str1)+strlen(str2)+1);
 	sprintf(resp, "%s%s", str1, str2);
 	return resp;
 }
@@ -239,4 +239,11 @@ void removeProdFromArray(product_array * array,product prod){
 	array->array[array->size-1].qty=0;
 	array->size--;
 	array->array=realloc(array->array,(array->size+1)*sizeof(product));
+}
+
+void fillWithCeros(char * string){
+	int i = 0;
+	for(;i < 256;i++){
+		string[i]='\0';
+	}
 }

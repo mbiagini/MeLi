@@ -1,0 +1,52 @@
+INT size;
+GETINT TO size;
+INT i <- 0;
+PRODUCT carrito[];
+PRODUCT aux;
+
+WHILE i < size
+	GETSTRING TO aux.NAME;
+	GETSTRING TO aux.DESC;
+	GETDOUBLE TO aux.PRICE;
+	GETINT TO aux.STOCK;
+	carrito.ADD(aux);
+	i <- INC i;
+ENDWHILE
+
+PRODUCT searchJean[];
+PRODUCT searchJeanFiltered[];
+PRODUCT searchJacket[];
+PRODUCT searchJacketFiltered[];
+
+searchJean <- SEARCH "JEAN" INSIDE carrito;
+searchJeanFiltered <- SEARCH "TALLE_36" INSIDE searchJean;
+searchJacket<- SEARCH "CAMPERA" INSIDE carrito;
+searchJacketFiltered <- SEARCH "TALLE_M" INSIDE searchJacket;
+
+PRINTLN("Imprimiendo Jeans");
+ i <- searchJean.SIZE;
+WHILE i > 0 
+	PRINTLN(searchJean.GET(i - 1));
+	i<- DEC i;
+ENDWHILE
+
+PRINTLN("Imprimiendo Jeans talle 36");
+ i <- searchJeanFiltered.SIZE;
+WHILE i > 0 
+	PRINTLN(searchJeanFiltered.GET(i - 1));
+	i<- DEC i;
+ENDWHILE
+
+PRINTLN("Imprimiendo Camperas");
+i <- searchJacket.SIZE;
+WHILE i > 0 
+	PRINTLN(searchJacket.GET(i - 1));
+	i<- DEC i;
+ENDWHILE
+
+PRINTLN("Imprimiendo Camperas talle M");
+ i <- searchJacketFiltered.SIZE;
+WHILE i > 0 
+	PRINTLN(searchJacketFiltered.GET(i - 1));
+	i<- DEC i;
+ENDWHILE
