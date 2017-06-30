@@ -1,0 +1,35 @@
+INT size;
+GETINT TO size;
+INT i <- 0;
+PRODUCT carrito[];
+PRODUCT aux;
+
+PRINT("\n");
+
+WHILE i < size
+	GETSTRING TO aux.NAME;
+	GETSTRING TO aux.DESC;
+	GETDOUBLE TO aux.PRICE;
+	GETINT TO aux.STOCK;
+	carrito.ADD(aux);
+	PRINTLN(aux);
+	i <- INC i;
+ENDWHILE
+
+PRINT("\n");
+
+PRINTLN("UNA FAMILIA COMPRA 1 REMERA MANGA LARGA, 2 JEANS, UN BLUE LABEL Y  1 LONGBOARD");
+
+carrito.REMOVE(0);
+carrito.GET(0).STOCK <- carrito.GET(0).STOCK - 1;
+carrito.REMOVE(3);
+carrito.REMOVE(4);
+
+PRINT("\n");
+
+i <- 0;
+
+WHILE i < carrito.SIZE
+	PRINTLN(carrito.GET(i));
+	i <- INC i;
+ENDWHILE
