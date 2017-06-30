@@ -30,7 +30,7 @@ constName				[A-Z]+
 
 digit					[0-9]
 wholeNumber				{digit}+|-{digit}+
-doubleNumber			{digit}+\.{digit}+
+doubleNumber			({digit}+\.{digit}+)|(-{digit}+\.{digit}+)
 stringVal				[^\"]+
 
 
@@ -41,10 +41,10 @@ stringVal				[^\"]+
 ">="					{ return GE; }
 "!="					{ return NE; }
 "=="					{ return EQ; }
-"&&"					{ return AND; }
-"||"					{ return OR; }
-"++"					{ return INC; }
-"--"					{ return DEC; }
+"AND"					{ return AND; }
+"OR"					{ return OR; }
+"INC"					{ return INC; }
+"DEC"					{ return DEC; }
 
 "DISCOUNT"					{return DISCOUNT;}
 "GOTSTOCK"					{return GOTSTOCK;}

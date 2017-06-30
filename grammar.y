@@ -590,8 +590,6 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 														}
 														
 													}
-														
-
 			|	PRINT '(' expr ')' ';' '\n'		{	$$.string = exprToPrint($3); }
 			| 	PRINTLN '(' expr ')' ';' '\n'	{ 	$$.string = exprToPrintln($3); }
 			| 	IF expr '\n' 
@@ -867,7 +865,17 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 										else {
 											yyerror("WRONG EXPR");
 											YYABORT; } 
-										}
+									}
+			| 	expr '*' '*' expr 	{
+										$$.type = validExpr($1,$4);
+										if($$.type != -1) {
+											$$.type = DOUBLE_TYPE;
+											$$.expr = malloc((strlen("pow(,)")+strlen($1.expr)+strlen($4.expr)+1)*sizeof(*($$.expr)));
+											sprintf($$.expr, "pow(%s,%s)", $1.expr, $4.expr); }
+										else {
+											yyerror("WRONG EXPR");
+											YYABORT; }
+									}
 			|	expr '*' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
 			|	expr '<' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
@@ -878,15 +886,14 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 			| 	expr EQ expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	expr AND expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	expr OR expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	'!' expr 				{ if($2.type != INT_TYPE){yyerror("WRONG EXPR");YYABORT;}$$.expr=malloc((1+strlen($2.expr)+1+1)*sizeof(char));sprintf($$.expr , "!%s",$2.expr); $$.type = INT_TYPE;}
-			| '(' expr ')'				{ $$.type = $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
+			| 	'!' expr 			{ if($2.type != INT_TYPE){yyerror("WRONG EXPR");YYABORT;}$$.expr=malloc((1+strlen($2.expr)+1+1)*sizeof(char));sprintf($$.expr , "!%s",$2.expr); $$.type = INT_TYPE;}
+			| 	'(' expr ')'		{ $$.type = $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
 
-const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
+const_expr	:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*sizeof(*($$.expr))); sprintf($$.expr, "%d", $1); }
 			|	DOUBLENUMBER				{ $$.type = DOUBLE_TYPE; $$.expr = malloc(256*sizeof(*($$.expr))); sprintf($$.expr, "%f", $1); }
-			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}							
-			|	const_expr '+' const_expr			{$$.type = validAddExpr($1,$3); if($$.type != -1){$$.expr = addition($1,$3);}else{yyerror("WRONG EXPR");YYABORT;} }
+			| 	STRINGVAL			{$$.expr=$1;$$.type = STRING_TYPE;}
 			|	CONST'.'field				{VARIABLE * v = varSearch($1);
 											    if(v == NULL ){
 													yyerror(" const doesnt exist");YYABORT;}
@@ -901,9 +908,34 @@ const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1
 								    if(v == NULL ){
 										yyerror("const doesnt exist");YYABORT;}
 								   $$.expr = $1;$$.type=v->type;
-								}					
-			|	const_expr '-' const_expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr = strcat(strcat($1.expr,"-"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	const_expr '*' const_expr		{$$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+								}
+			|	const_expr '+' const_expr		{ 
+													$$.type = validAddExpr($1,$3);
+													if ($$.type != -1)
+														$$.expr = addition($1,$3);
+													else {
+														yyerror("WRONG EXPR");
+														YYABORT; } 
+												}
+			|	const_expr '-' const_expr 		{ 	
+													$$.type = validSubsExpr($1,$3);
+													if($$.type != -1)
+														$$.expr = substraction($1,$3);
+													else {
+														yyerror("WRONG EXPR");
+														YYABORT; } 
+												}
+			| 	const_expr '*' '*' const_expr 	{
+													$$.type = validExpr($1,$4);
+													if($$.type != -1) {
+														$$.type = DOUBLE_TYPE;
+														$$.expr = malloc((strlen("pow(,)")+strlen($1.expr)+strlen($4.expr)+1)*sizeof(*($$.expr)));
+														sprintf($$.expr, "pow(%s,%s)", $1.expr, $4.expr); }
+													else {
+														yyerror("WRONG EXPR");
+														YYABORT; }
+												}
+			|	const_expr '*' const_expr		{ $$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			|	const_expr '/' const_expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
 			|	const_expr '<' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
 			|	const_expr '>' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
@@ -913,8 +945,8 @@ const_expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1
 			| 	const_expr EQ const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	const_expr AND const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
 			| 	const_expr OR const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	'!' const_expr 				{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
-			| '(' const_expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
+			| 	'!' const_expr 					{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
+			| 	'(' const_expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
 			;
 

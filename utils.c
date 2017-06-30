@@ -41,13 +41,12 @@ int intLength(int num){
 }
 
 var_type validExpr(expresion e1,expresion e2) {
-	if(e1.type == STRING_TYPE && e2.type != STRING_TYPE)
+	if (e1.type == PRODUCT_TYPE || e2.type == PRODUCT_TYPE)
 		return -1;
-	if(e2.type == STRING_TYPE && e1.type != STRING_TYPE){
+	if (e1.type == STRING_TYPE || e2.type == STRING_TYPE)
 		return -1;
-	}
-	if(e1.type == e2.type)
-		return e1.type;
+	if (e1.type == DOUBLE_TYPE || e2.type == DOUBLE_TYPE)
+		return DOUBLE_TYPE;
 	return INT_TYPE;
 }
 
