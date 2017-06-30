@@ -255,6 +255,20 @@
 
 		return ans;
 	}
+
+	char *getRelationalComparison(expresion e1, expresion e2, const char *operand) {
+		char *resp;
+		if (e1.type == STRING_TYPE) {
+			resp = malloc((strlen("strcmp(,)  0")+strlen(operand)+strlen(e1.expr)+strlen(e2.expr)+1)*sizeof(*resp));
+			sprintf(resp, "(strcmp(%s,%s) %s 0)", e1.expr, e2.expr, operand); 
+		}					
+		else {
+			resp = malloc((2+strlen(e1.expr)+strlen(operand)+strlen(e2.expr)+1)*sizeof(*resp));
+			sprintf(resp, "%s %s %s", e1.expr, operand, e2.expr);
+		}
+		return resp;
+	}
+
 %}
 
 %union {
@@ -284,6 +298,7 @@
 %token LE GE NE EQ AND OR INC DEC
 %left '+' '-'
 %left '*' '/'
+%left '%'
 %right '!'
 %left INC DEC '<' '>' LE GE NE EQ AND OR
 
@@ -907,7 +922,7 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 											YYABORT; } 
 									}
 			| 	expr '*' '*' expr 	{
-										$$.type = validExpr($1,$4);
+										$$.type = validNumExpr($1,$4);
 										if($$.type != -1) {
 											$$.type = DOUBLE_TYPE;
 											$$.expr = malloc((strlen("pow(,)")+strlen($1.expr)+strlen($4.expr)+1)*sizeof(*($$.expr)));
@@ -916,16 +931,57 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 											yyerror("WRONG EXPR");
 											YYABORT; }
 									}
-			|	expr '*' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	expr '/' expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
-			|	expr '<' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
-			|	expr '>' expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	expr LE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	expr GE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	expr NE expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"!="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	expr EQ expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	expr AND expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	expr OR expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	expr '%' expr 		{ 
+										if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+											yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+										$$.type = INT_TYPE;
+										$$.expr = malloc((strlen("( %% )")+strlen($1.expr)+strlen($3.expr)+1)*sizeof(*($$.expr)));
+										sprintf($$.expr, "(%s %% %s)", $1.expr, $3.expr);
+									}
+			|	expr '*' expr		{ $$.type = validNumExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	expr '/' expr		{ $$.type = validNumExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	expr '<' expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,"<");
+									}
+			|	expr '>' expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,">");
+									}
+			|	expr LE expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,"<=");
+									}
+			|	expr GE expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,">=");
+									}
+			|	expr NE expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,"!=");
+									}
+			|	expr EQ expr 		{ 
+										$$.type = validRelExpr($1,$3);
+										if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+										$$.expr = getRelationalComparison($1,$3,"==");
+									}
+			| 	expr AND expr 		{
+										if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+											yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+										$$.type = INT_TYPE;
+										$$.expr = strcat(strcat($1.expr," && "), $3.expr);
+									}
+			| 	expr OR expr 		{
+										if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+											yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+										$$.type = INT_TYPE;
+										$$.expr = strcat(strcat($1.expr," || "), $3.expr);
+									}
 			| 	'!' expr 			{ if($2.type != INT_TYPE){yyerror("WRONG EXPR");YYABORT;}$$.expr=malloc((1+strlen($2.expr)+1+1)*sizeof(char));sprintf($$.expr , "!%s",$2.expr); $$.type = INT_TYPE;}
 			| 	'(' expr ')'		{ $$.type = $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}
@@ -966,7 +1022,7 @@ const_expr	:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)
 														YYABORT; } 
 												}
 			| 	const_expr '*' '*' const_expr 	{
-													$$.type = validExpr($1,$4);
+													$$.type = validNumExpr($1,$4);
 													if($$.type != -1) {
 														$$.type = DOUBLE_TYPE;
 														$$.expr = malloc((strlen("pow(,)")+strlen($1.expr)+strlen($4.expr)+1)*sizeof(*($$.expr)));
@@ -975,16 +1031,57 @@ const_expr	:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)
 														yyerror("WRONG EXPR");
 														YYABORT; }
 												}
-			|	const_expr '*' const_expr		{ $$.type = validExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	const_expr '/' const_expr		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
-			|	const_expr '<' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
-			|	const_expr '>' const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			|	const_expr LE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"<="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	const_expr GE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,">="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	const_expr NE const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"!="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	const_expr EQ const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"=="), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	const_expr AND const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"&&"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
-			| 	const_expr OR const_expr 		{ $$.type = validExpr($1,$3); if($$.type != -1){$$.type=INT_TYPE;$$.expr = strcat(strcat($1.expr,"||"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			| 	const_expr '%' const_expr 					{ 
+													if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+														yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+													$$.type = INT_TYPE;
+													$$.expr = malloc((strlen("( %% )")+strlen($1.expr)+strlen($3.expr)+1)*sizeof(*($$.expr)));
+													sprintf($$.expr, "(%s %% %s)", $1.expr, $3.expr);
+												}
+			|	const_expr '*' const_expr		{ $$.type = validNumExpr($1,$3); if($$.type != -1){ $$.expr= strcat(strcat($1.expr,"*"), $3.expr); }else{yyerror("WRONG EXPR");YYABORT;}}
+			|	const_expr '/' const_expr		{ $$.type = validNumExpr($1,$3); if($$.type != -1){$$.expr = strcat(strcat($1.expr,"/"), $3.expr);}else{yyerror("WRONG EXPR");YYABORT;}} 
+			|	const_expr '<' const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,"<");
+												}
+			|	const_expr '>' const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,">");
+												}
+			|	const_expr LE const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,"<=");
+												}
+			|	const_expr GE const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,">=");
+												}
+			|	const_expr NE const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,"!=");
+												}
+			|	const_expr EQ const_expr 		{ 
+													$$.type = validRelExpr($1,$3);
+													if ($$.type == -1) { yyerror("WRONG EXPR");YYABORT; }
+													$$.expr = getRelationalComparison($1,$3,"==");
+												}
+			| 	const_expr AND const_expr 		{
+													if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+														yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+													$$.type = INT_TYPE;
+													$$.expr = strcat(strcat($1.expr," && "), $3.expr);
+												}
+			| 	const_expr OR const_expr 		{
+													if ($1.type != INT_TYPE || $3.type != INT_TYPE) {
+														yyerror("BOTH OPERANDS MUST BE INT");YYABORT; }
+													$$.type = INT_TYPE;
+													$$.expr = strcat(strcat($1.expr," || "), $3.expr);
+												}
 			| 	'!' const_expr 					{ $$.expr = strcat("!",$2.expr); $$.type = $2.type;}
 			| 	'(' const_expr ')'				{ $$.type == $2.type;$$.expr = malloc((1+strlen($2.expr)+1+1)*sizeof(*($$.expr)));
 								  sprintf($$.expr,"(%s)",$2.expr);}

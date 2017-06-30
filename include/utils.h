@@ -12,7 +12,8 @@ char *removeSubstring(char *str,const char *sub);
 char *intToChar(int i);
 char *doubleToChar(double d);
 
-var_type validExpr(expresion e1,expresion w2);
+var_type validNumExpr(expresion e1,expresion e2);
+var_type validRelExpr(expresion e1,expresion e2);
 var_type validAddExpr(expresion e1, expresion e2);
 var_type validSubsExpr(expresion e1, expresion e2);
 int  validate(char * type, var_type expr);

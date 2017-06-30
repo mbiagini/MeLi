@@ -40,7 +40,7 @@ int intLength(int num){
 	return i;
 }
 
-var_type validExpr(expresion e1,expresion e2) {
+var_type validNumExpr(expresion e1,expresion e2) {
 	if (e1.type == PRODUCT_TYPE || e2.type == PRODUCT_TYPE)
 		return -1;
 	if (e1.type == STRING_TYPE || e2.type == STRING_TYPE)
@@ -48,6 +48,18 @@ var_type validExpr(expresion e1,expresion e2) {
 	if (e1.type == DOUBLE_TYPE || e2.type == DOUBLE_TYPE)
 		return DOUBLE_TYPE;
 	return INT_TYPE;
+}
+
+var_type validRelExpr(expresion e1, expresion e2) {
+	if (e1.type == PRODUCT_TYPE || e2.type == PRODUCT_TYPE)
+		return -1;
+	if (e1.type == e2.type)
+		return INT_TYPE;
+	if (e1.type == DOUBLE_TYPE && e2.type == INT_TYPE)
+		return INT_TYPE;
+	if (e2.type == DOUBLE_TYPE && e1.type == INT_TYPE)
+		return INT_TYPE;
+	return -1;
 }
 
 var_type validAddExpr(expresion e1, expresion e2) {
