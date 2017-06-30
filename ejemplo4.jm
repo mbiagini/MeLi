@@ -1,0 +1,30 @@
+INT size;
+GETINT TO size;
+INT i <- 0;
+PRODUCT carrito[];
+PRODUCT aux;
+
+PRINT("\n");
+
+WHILE i < size
+	GETSTRING TO aux.NAME;
+	GETSTRING TO aux.DESC;
+	GETDOUBLE TO aux.PRICE;
+	GETINT TO aux.STOCK;
+	carrito.ADD(aux);
+	PRINTLN(aux);
+	i <- INC i;
+ENDWHILE
+
+PRINT("\n");
+
+PRINTLN("APLICANDO DESCUENTOS POR DIA DEL PADRE (25%)");
+
+PRINT("\n");
+i <- 0;
+
+WHILE i < size
+	carrito.GET(i) DISCOUNT 25;
+	PRINTLN(carrito.GET(i));
+	i <- INC i;
+ENDWHILE
