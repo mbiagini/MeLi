@@ -4,32 +4,33 @@ INT i <- 0;
 PRODUCT carrito[];
 PRODUCT aux;
 
-PRINT("\n");
 
+
+PRINTLN("SE MUESTRAN LOS PRODUCTOS CON STOCK");
+
+PRINT("\n");
 WHILE i < size
 	GETSTRING TO aux.NAME;
 	GETSTRING TO aux.DESC;
 	GETDOUBLE TO aux.PRICE;
 	GETINT TO aux.STOCK;
 	carrito.ADD(aux);
-	PRINTLN(aux);
+	IF GOTSTOCK(aux)
+		PRINTLN(aux);
+	ENDIF
 	i <- INC i;
 ENDWHILE
 
 PRINT("\n");
 
-PRINTLN("UNA FAMILIA COMPRA 1 REMERA MANGA LARGA, 2 JEANS, UN BLUE LABEL Y  1 LONGBOARD");
-
-carrito.REMOVE(0);
-carrito.GET(0).STOCK <- carrito.GET(0).STOCK - 1;
-carrito.REMOVE(3);
-carrito.REMOVE(4);
+PRINTLN("SE RENUEVA EL STOCK DE TODOS LOS PRODUCTOS A PRINCIPIO DE MES");
 
 PRINT("\n");
 
 i <- 0;
 
 WHILE i < carrito.SIZE
+	carrito.GET(i).STOCK <- carrito.GET(i).STOCK +10;
 	PRINTLN(carrito.GET(i));
 	i <- INC i;
 ENDWHILE
