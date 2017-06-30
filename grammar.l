@@ -53,7 +53,7 @@ stringVal				[^\"]+
 "GET"					{return GET;}
 "IF"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;if(!wasOpened){block = blocks;}wasOpened = 1;return IF; }
 "THEN"					{ return THEN; }
-"ELSE"					{ state++;blocks++;block = blocks;return ELSE; }
+"ELSE"					{ blocks++;block = blocks;return ELSE; }
 "ENDIF"					{ closeds++;wasOpened = 0;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDIF; }
 
 "WHILE"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;if(!wasOpened){block = blocks;}wasOpened = 1; return WHILE; }
