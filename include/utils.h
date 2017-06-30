@@ -28,6 +28,8 @@ product_array *searchStr(char *str, product_array array);
 
 void addProd(product_array *array, product p);
 
+void removeFromArray(product_array *, int);
+void removeProdFromArray(product_array *, product);
 #endif
 
 

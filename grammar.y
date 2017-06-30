@@ -36,8 +36,8 @@
 		VARIABLE ans;
 		ans.name = NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL && !found ; i++){
-			if(strcmp(vars[i].name, name) == 0 && vars[i].state <= state && vars[i].block == block)  {
-				if(vars[i].state == state ){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  ))  {
+				if(vars[i].state == state && vars[i].block == block){
 					found = 1;
 				}
 				ans = vars[i];
@@ -67,8 +67,8 @@
 		int i;
 		VARIABLE * ans= NULL;
 		for(i = 0 ; i < MAX_VARS && vars[i].name != NULL; i++){
-			if(strcmp(vars[i].name, name) == 0 && vars[i].state <= state && vars[i].block == block){
-				if(vars[i].state == state ){
+			if(strcmp(vars[i].name, name) == 0 && (vars[i].state < state|| (vars[i].state == state && vars[i].block == block)  )){
+				if(vars[i].state == state && vars[i].block == block){
 					return &vars[i];
 				}
 				ans =  &vars[i];
@@ -281,7 +281,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE SEARCH IN INSIDE MIN MAX
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN SEARCH INSIDE MIN MAX REMOVE SUBSTRACT FROM
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -554,6 +554,20 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 													$$.string = malloc((strlen("addProd(&,);\\n")+strlen($1)+strlen($5)+1)*sizeof(*($$.string)));
 													sprintf($$.string, "addProd(&%s,%s);\n", $1, $5);													
 												}
+
+			|	VAR'.'REMOVE'('expr')'';''\n'			{VARIABLE * v = varSearch($1);
+											    if(v == NULL ){
+													yyerror(" var doesnt exist");YYABORT;}
+												if(v->type != PRODUCT_ARRAY_TYPE){
+													yyerror(" var must be a product array");YYABORT;
+												}
+												if($5.type != INT_TYPE){
+													yyerror(" index must be an integer");YYABORT;
+												}
+												$$.string = malloc((strlen($1)+strlen($5.expr)+22)*sizeof(*($$.string)));
+											   sprintf($$.string,"removeFromArray(&%s,%s);\n",$1,$5.expr);
+											   
+											}
 			|	type VAR '<' '-' expr ';' '\n' 	{	if (validate($1,$5.type)) {
 														int ans = addVar(prepareVar($1,$2,$5.expr,0));
 														if( ans >= 0) {
@@ -713,6 +727,19 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 																$$.string = malloc((strlen($1.expr)+2*strlen($2)+2*strlen($4.expr)+159+1)*sizeof(*($$.string)));
 															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
 														}
+													 }
+			|	SUBSTRACT VAR FROM VAR ';''\n'		{ VARIABLE * v = varSearch($2);VARIABLE * v2 = varSearch($4);
+														 if(v ==NULL || v2 ==NULL){
+														 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+														  }
+															if(v->type != PRODUCT_TYPE ){
+																yyerror("FIRST VAR ISNT OF TYPE PRODUCT");YYABORT;
+															}
+															if(v2-> type != PRODUCT_ARRAY_TYPE){
+																yyerror("SECOND VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+															}
+															$$.string = malloc((strlen($4)+strlen($2)+26)*sizeof(*($$.string)));
+															sprintf($$.string,"removeProdFromArray(&%s,%s);\n",$4,$2);
 													 }
 
 			
@@ -892,7 +919,7 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 														yyerror("FIRST VAR ISNT OF TYPE PRODUCT");YYABORT;
 													}
 													if(v2-> type != PRODUCT_ARRAY_TYPE){
-														yyerror("FIRST VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
 													}
 													$$.expr = malloc((strlen($3)+strlen($1)+14)*sizeof(*($$.expr)));
 													sprintf($$.expr,"prodInArray(%s,%s)",$1,$3);
@@ -1108,7 +1135,7 @@ int block =0;
 int blocks = 0;
 int * lastOne;
 int closeds =0;
-int wasOpened =1;
+
 void yyerror(char const *s) {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 }
