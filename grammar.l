@@ -10,7 +10,7 @@
 	extern int blocks;
 	extern int * lastOne;
 	extern int closeds;
-	
+	extern int wasOpened;
 
 
 %}
@@ -51,13 +51,13 @@ stringVal				[^\"]+
 "EQUALS"					{return EQUALS;}
 "ADD"					{return ADD;}
 "GET"					{return GET;}
-"IF"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;block = blocks;return IF; }
+"IF"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;if(!wasOpened){block = blocks;}wasOpened = 1;return IF; }
 "THEN"					{ return THEN; }
 "ELSE"					{ state++;blocks++;block = blocks;return ELSE; }
-"ENDIF"					{ closeds++;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDIF; }
+"ENDIF"					{ closeds++;wasOpened = 0;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDIF; }
 
-"WHILE"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;block = blocks; return WHILE; }
-"ENDWHILE"				{ closeds++;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDWHILE; }
+"WHILE"					{ state++;lastOne = realloc(lastOne,(blocks-closeds+1)*sizeof(int));lastOne[blocks-closeds]=block;blocks++;if(!wasOpened){block = blocks;}wasOpened = 1; return WHILE; }
+"ENDWHILE"				{ closeds++;wasOpened = 0;block = lastOne[blocks-closeds];lastOne = realloc(lastOne,(blocks-closeds)*sizeof(int));state--;return ENDWHILE; }
 
 "PRINT"					{ return PRINT; }
 "PRINTLN"				{ return PRINTLN; }
