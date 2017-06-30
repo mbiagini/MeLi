@@ -281,7 +281,7 @@
 
 %error-verbose
 
-%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX REMOVE
+%token STRING INT DOUBLE PRODUCT DISCOUNT BETWEEN ROUND NAME PRICE DESC STOCK GOTSTOCK EQUALS ADD GET GETINT GETDOUBLE GETSTRING SIZE IN MIN MAX REMOVE SUBSTRACT FROM
 
 %token <string> VAR CONST STRINGVAL  
 %token <intnum> NUMBER	PERCENTAGE
@@ -717,6 +717,19 @@ statement 	:	VAR '<' '-' expr ';' '\n' 		{
 															sprintf($$.string,"scanf(\"%s\",AUX_STRING_READER1);\n%s%s=malloc((strlen(AUX_STRING_READER1)+1)*sizeof(char));\nmemcpy(%s%s,AUX_STRING_READER1,strlen(AUX_STRING_READER1)*sizeof(char));\n",$1.expr,$2,$4.expr,$2,$4.expr);
 														}
 													 }
+			|	SUBSTRACT VAR FROM VAR ';''\n'		{ VARIABLE * v = varSearch($2);VARIABLE * v2 = varSearch($4);
+														 if(v ==NULL || v2 ==NULL){
+														 	yyerror("AT LEAST ONEVAR ISNT DECLARATED");YYABORT;
+														  }
+															if(v->type != PRODUCT_TYPE ){
+																yyerror("FIRST VAR ISNT OF TYPE PRODUCT");YYABORT;
+															}
+															if(v2-> type != PRODUCT_ARRAY_TYPE){
+																yyerror("SECOND VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+															}
+															$$.string = malloc((strlen($4)+strlen($2)+26)*sizeof(*($$.string)));
+															sprintf($$.string,"removeProdFromArray(&%s,%s);\n",$4,$2);
+													 }
 
 			
 			;
@@ -895,7 +908,7 @@ expr		:	NUMBER	 					{ $$.type=INT_TYPE; $$.expr = malloc((intLength($1)+1)*size
 														yyerror("FIRST VAR ISNT OF TYPE PRODUCT");YYABORT;
 													}
 													if(v2-> type != PRODUCT_ARRAY_TYPE){
-														yyerror("FIRST VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
+														yyerror("SECOND VAR ISNT OF TYPE PRODUCT ARRAY");YYABORT;
 													}
 													$$.expr = malloc((strlen($3)+strlen($1)+14)*sizeof(*($$.expr)));
 													sprintf($$.expr,"prodInArray(%s,%s)",$1,$3);

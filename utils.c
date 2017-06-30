@@ -200,3 +200,24 @@ void removeFromArray(product_array * array,int index){
 	array->size--;
 	array->array=realloc(array->array,(array->size+1)*sizeof(product));
 }
+
+void removeProdFromArray(product_array * array,product prod){
+	int i =0;
+	int found = 0;
+	for(;i < array->size && !found;i++){
+		if(strcmp(array->array[i].name,prod.name)== 0 && strcmp(array->array[i].description,prod.description)== 0 && array->array[i].price == prod.price && array->array[i].qty == prod.qty)
+			found = 1;
+	}
+	if(!found)
+		return;
+	int index = i-1;
+	while(index < array->size-1){
+		array->array[index]=array->array[++index];
+	}
+	array->array[array->size-1].name="";
+	array->array[array->size-1].description="";
+	array->array[array->size-1].price=0.0;
+	array->array[array->size-1].qty=0;
+	array->size--;
+	array->array=realloc(array->array,(array->size+1)*sizeof(product));
+}

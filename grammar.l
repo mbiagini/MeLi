@@ -66,6 +66,8 @@ stringVal				[^\"]+
 "IN"			{ return IN; }
 "MAX"			{ return MAX; }
 "MIN"			{ return MIN; }
+"SUBSTRACT"			{ return SUBSTRACT; }
+"FROM"			{ return FROM; }
 
 "SIZE"			{ return SIZE; }
 
