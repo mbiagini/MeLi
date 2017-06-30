@@ -1,0 +1,46 @@
+INT size;
+GETINT TO size;
+INT idx <- 0;
+PRODUCT stock[];
+PRODUCT aux;
+
+WHILE idx < size
+	GETSTRING TO aux.NAME;
+	GETSTRING TO aux.DESC;
+	GETDOUBLE TO aux.PRICE;
+	GETINT TO aux.STOCK;
+	stock.ADD(aux);
+	idx <- INC idx;
+ENDWHILE
+
+STRING jeanSize;
+STRING jacketSize;
+STRING shirtSize;
+STRING shoeSize;
+
+GETSTRING TO jeanSize;
+GETSTRING TO jacketSize;
+GETSTRING TO shirtSize;
+GETSTRING TO shoeSize;
+
+PRODUCT jeans[];
+PRODUCT jackets[];
+PRODUCT shirts[];
+PRODUCT shoes[];
+
+jeans <- SEARCH "JEAN" INSIDE stock;
+jackets <- SEARCH "CAMPERA" INSIDE stock;
+shirts <- SEARCH "REMERA" INSIDE stock;
+shoes <- SEARCH "ZAPATILLAS" INSIDE stock;
+
+jeans <- SEARCH "TALLE_" + jeanSize INSIDE jeans;
+jackets <- SEARCH "TALLE_" + jacketSize INSIDE jackets;
+shirts <- SEARCH "TALLE_" + shirtSize INSIDE shirts;
+shoes <- SEARCH "TALLE_" + shoeSize INSIDE shoes;
+
+PRINTLN("Mejor presupuesto para el conjunto Jean-Campera-Remera-Zapatillas:");
+PRINTLN(MIN jeans);
+PRINTLN(MIN jackets);
+PRINTLN(MIN shirts);
+PRINTLN(MIN shoes);
+ 

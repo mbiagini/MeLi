@@ -58,6 +58,8 @@
 					 break;
 			case PRODUCT_TYPE:return validate("product",e.type) == 0 ? -2 : 1;
 					 break;
+			case PRODUCT_ARRAY_TYPE:return e.type == PRODUCT_ARRAY_TYPE;
+					break; 
 		}
 		return -2;
 			
